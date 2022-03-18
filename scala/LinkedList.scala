@@ -1,15 +1,35 @@
+/**
+ * A custom LinkedList. It is linked because it was intended to be
+ * easy to merge two lists together. In the future, this may be replaced
+ * with a standard Scala collection.
+ *
+ * @param front the first Node of the LinkedList
+ * @param back the last Node of the LinkedList
+ * @param listSize the size of the LinkedList
+ * @tparam A any type
+ */
 class LinkedList[A <: Ordered[A]]
                 (var front: Node[A], var back: Node[A], var listSize: Int)
                 extends List[A] {
 
+
+  /**
+   * Returns the size of the LinkedList.
+   * @return listSize
+   */
   override def size: Int = listSize
 
+
+  /**
+   * Returns whether the LinkedList is empty or not.
+   * @return True if empty, false otherwise
+   */
   override def isEmpty: Boolean = listSize == 0
 
-  //TODO: make this method more functional
+
+  // TODO: make this method more functional
   /**
    * This method adds an element to the LinkedList with regard to the defined order.
-   * The element can not be null, and it also must not exist in the list already.
    *
    * @param element any element of generic type A that implements Ordered[A]
    */
@@ -43,20 +63,59 @@ class LinkedList[A <: Ordered[A]]
       while ((walker.next != null) && (walker.element.compareTo(element) < 0)) {
         walker = walker.next
       }
-      if ((walker.next == null) || (walker.element.compareTo(element) == 0)) {
-        throw new IllegalArgumentException("Element already exists in list")
+      newNode.next = walker.next
+      newNode.prev = walker
+      walker.next.prev = newNode
+      walker.next = newNode
+      listSize += 1
+    }
+  }
+
+
+  // TODO: make this method more functional
+  /**
+   * Removes an element from the LinkedList. The element must not be null, it must
+   * not exist in the LinkedList, and the LinkedList should not be empty.
+   *
+   * @param element the element to be removed from the LinkedList
+   */
+  override def remove(element: A): Unit = {
+    if element == null then throw new NullPointerException("Element can not be null")
+    else if isEmpty then throw new IndexOutOfBoundsException("LinkedList can not be empty")
+
+    else if (size == 1) {
+      front = null
+      back = null
+      listSize -= 1
+    }
+    else if (element.compareTo(front.element) == 0) {
+      front.next.prev = null
+      front = front.next
+      listSize -= 1
+    }
+    else if (element.compareTo(back.element) == 0) {
+      back.prev.next = null
+      back = back.prev
+      listSize -= 1
+    }
+      //TODO: refactor this, the nesting is ugly and a utility method could be used
+    else {
+
+      var walker = front
+      while ((walker.next != null) && (walker.element.compareTo(element) < 0)) {
+        walker = walker.next
+      }
+      if ((walker.next == null) || (walker.element.compareTo(element) > 0)) {
+        throw new IllegalArgumentException("Element does not exist in the LinkedList")
       }
       else {
-        newNode.next = walker.next
-        newNode.prev = walker
-        walker.next.prev = newNode
-        walker.next = newNode
-        listSize += 1
+        walker.prev = walker.prev.prev
+        walker.prev.next = walker
+        listSize -= 1
       }
     }
   }
 
-  override def remove(element: A): Unit = {} //To Do
 
   override def contains(element: A): Boolean = {false} //To Do
 
