@@ -32,7 +32,6 @@ class LinkedList[A <: Ordered[A]]
 
 
   // TODO: make this method more functional
-
   /**
    * This method adds an element to the LinkedList with regard to the defined order.
    *
@@ -68,17 +67,25 @@ class LinkedList[A <: Ordered[A]]
       while ((walker.next != null) && (walker.element.compare(element) < 0)) {
         walker = walker.next
       }
-      newNode.next = walker.next
-      newNode.prev = walker
-      walker.next.prev = newNode
-      walker.next = newNode
-      listSize += 1
+      if (walker.next == null) {
+        newNode.next = null
+        newNode.prev = back
+        back.next = newNode
+        back = newNode
+        listSize += 1
+      }
+      else {
+        newNode.next = walker
+        walker.prev.next = newNode
+        newNode.prev = walker.prev
+        walker.prev = newNode
+        listSize += 1
+      }
     }
   }
 
 
   // TODO: make this method more functional
-
   /**
    * Removes an element from the LinkedList. The element must not be null, it must
    * not exist in the LinkedList, and the LinkedList should not be empty.
@@ -141,22 +148,78 @@ class LinkedList[A <: Ordered[A]]
   }
 
 
+  /**
+   * Creates an iterator object to make things like string-building easier.
+   *
+   * @return iterator and iterator on a LinkedList
+   */
   def iterator: Iterator[A] = {
-     new Iterator[A] {
-       var cursor: Node[A] = front
-       override def hasNext: Boolean = cursor != null
+    new Iterator[A] {
+      var cursor: Node[A] = front
 
-       override def next(): A = {
-         if hasNext then {
-           val elem = cursor.element
-           cursor = cursor.next
-           elem
-         }
-         else throw new NullPointerException()
-       }
+      override def hasNext: Boolean = cursor != null
+
+      override def next(): A = {
+        if hasNext then {
+          val elem = cursor.element
+          cursor = cursor.next
+          elem
+        }
+        else throw new NullPointerException()
+      }
     }
   }
 
+
+  /**
+   * A method that makes a copy of a list without mutating the original list
+   *
+   * @return copy the list that was copied.
+   */
+  def copyList: LinkedList[A] = {
+    val copy = new LinkedList[A](front = null, back = null, listSize = 0)
+    val iter = iterator
+    while (iter.hasNext) {
+      copy.add(iter.next)
+    }
+    copy
+  }
+
+
+  /**
+   * A method that returns the merging of two lists, without
+   * mutating the original lists.
+   *
+   * @param that the list to be merged with this list
+   * @return a list that is the merging of two lists
+   */
+  def merge(that: LinkedList[A]): LinkedList[A] = {
+
+    val copy1 = this.copyList
+    val copy2 = that.copyList
+    if (copy1.size < copy2.size) { // Merges the smaller list onto the larger list
+      val iter = copy1.iterator
+      while (iter.hasNext) {
+        copy2.add(iter.next)
+      }
+      copy2
+    }
+    else { // Merges the smaller list onto the larger list
+      val iter = copy2.iterator
+      while (iter.hasNext) {
+        copy1.add(iter.next)
+      }
+      copy1
+    }
+  }
+
+
+  /**
+   * Formats a LinkedList as a String, with each object
+   * represented as a String on its own line
+   *
+   * @return the LinkedList as a String
+   */
   override def toString: String = {
     val iter = iterator
     var result = ""
@@ -188,7 +251,9 @@ class Node[A](val element: A, var next: Node[A], var prev: Node[A]) {
 
 
 /**
- * A trait for creating a list
+ * A trait for creating a list.
+ * I don't know why I made a trait. Maybe I'll make more custom collections later.
+ *
  * @tparam A any type
  */
 trait List[A] {
