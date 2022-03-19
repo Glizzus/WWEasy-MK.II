@@ -1,3 +1,5 @@
+import scala.collection.Iterator
+
 /**
  * A custom LinkedList. It is linked because it was intended to be
  * easy to merge two lists together. In the future, this may be replaced
@@ -15,6 +17,7 @@ class LinkedList[A <: Ordered[A]]
 
   /**
    * Returns the size of the LinkedList.
+   *
    * @return listSize
    */
   override def size: Int = listSize
@@ -22,12 +25,14 @@ class LinkedList[A <: Ordered[A]]
 
   /**
    * Returns whether the LinkedList is empty or not.
+   *
    * @return True if empty, false otherwise
    */
   override def isEmpty: Boolean = listSize == 0
 
 
   // TODO: make this method more functional
+
   /**
    * This method adds an element to the LinkedList with regard to the defined order.
    *
@@ -42,25 +47,25 @@ class LinkedList[A <: Ordered[A]]
       back = newNode
       listSize += 1
     }
-    else if (element.compareTo(front.element) < 0) {
+    else if (element.compare(front.element) < 0) {
       newNode.next = front
       newNode.prev = null
       front.prev = newNode
       front = newNode
       listSize += 1
     }
-    else if (element.compareTo(back.element) > 0) {
+    else if (element.compare(back.element) > 0) {
       newNode.next = null
       newNode.prev = back
       back.next = newNode
       back = newNode
       listSize += 1
     }
-      //TODO: refactor this, the nesting is ugly and a utility method could be used
+    //TODO: refactor this, the nesting is ugly and a utility method could be used
     else {
 
       var walker = front
-      while ((walker.next != null) && (walker.element.compareTo(element) < 0)) {
+      while ((walker.next != null) && (walker.element.compare(element) < 0)) {
         walker = walker.next
       }
       newNode.next = walker.next
@@ -73,6 +78,7 @@ class LinkedList[A <: Ordered[A]]
 
 
   // TODO: make this method more functional
+
   /**
    * Removes an element from the LinkedList. The element must not be null, it must
    * not exist in the LinkedList, and the LinkedList should not be empty.
@@ -88,24 +94,24 @@ class LinkedList[A <: Ordered[A]]
       back = null
       listSize -= 1
     }
-    else if (element.compareTo(front.element) == 0) {
+    else if (element.compare(front.element) == 0) {
       front.next.prev = null
       front = front.next
       listSize -= 1
     }
-    else if (element.compareTo(back.element) == 0) {
+    else if (element.compare(back.element) == 0) {
       back.prev.next = null
       back = back.prev
       listSize -= 1
     }
-      //TODO: refactor this, the nesting is ugly and a utility method could be used
+    //TODO: refactor this, the nesting is ugly and a utility method could be used
     else {
 
       var walker = front
-      while ((walker.next != null) && (walker.element.compareTo(element) < 0)) {
+      while ((walker.next != null) && (walker.element.compare(element) < 0)) {
         walker = walker.next
       }
-      if ((walker.next == null) || (walker.element.compareTo(element) > 0)) {
+      if ((walker.next == null) || (walker.element.compare(element) > 0)) {
         throw new IllegalArgumentException("Element does not exist in the LinkedList")
       }
       else {
@@ -117,10 +123,52 @@ class LinkedList[A <: Ordered[A]]
   }
 
 
-  override def contains(element: A): Boolean = {false} //To Do
+  //TODO: make this method more functional (recursion?)
+  /**
+   * Checks if the given element exists in the LinkedList
+   *
+   * @param element the element to be searched for
+   * @return True if the element exits, false otherwise
+   */
+  override def contains(element: A): Boolean = {
+    if element == null then throw new NullPointerException("Element can not be null")
+    var walker = front
+    while ((walker.next != null) && (walker.element.compare(element) < 0)) {
+      walker = walker.next
+    }
+    if walker.element.compare(element) == 0 then return true
+    false
+  }
 
 
+  def iterator: Iterator[A] = {
+     new Iterator[A] {
+       var cursor: Node[A] = front
+       override def hasNext: Boolean = cursor != null
+
+       override def next(): A = {
+         if hasNext then {
+           val elem = cursor.element
+           cursor = cursor.next
+           elem
+         }
+         else throw new NullPointerException()
+       }
+    }
+  }
+
+  override def toString: String = {
+    val iter = iterator
+    var result = ""
+    while (iter.hasNext) {
+      result += iter.next.toString
+      result += "\n"
+    }
+    result
+  }
 }
+
+
 
 /**
  * Defines a custom Node class for use in a LinkedList
@@ -137,11 +185,12 @@ class Node[A](val element: A, var next: Node[A], var prev: Node[A]) {
   }
 }
 
+
+
 /**
  * A trait for creating a list
  * @tparam A any type
  */
-
 trait List[A] {
 
   def add(element: A): Unit
