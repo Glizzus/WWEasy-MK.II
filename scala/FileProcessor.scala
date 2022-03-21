@@ -3,6 +3,8 @@ import scala.io.Source
 /**
  * Contains methods for processing different types of files
  * into different types of objects.
+ *
+ * @author Cal Crosby
  */
 object FileProcessor {
 
@@ -13,9 +15,9 @@ object FileProcessor {
    * @param fileName the csv to be read
    * @return the LinkedList with all of the lines processed into objects
    */
-  def stockDataFromCSV(fileName: String): LinkedList[DataWithDate] = {
+  def stockDataFromCSV(fileName: String): LinkedList[Date] = {
     val source = Source.fromFile(fileName)
-    val list = new LinkedList[DataWithDate](null, null, 0)
+    val list = new LinkedList[Date](null, null, 0)
     var header = true
     for (line <- source.getLines) {
       if (header) {
@@ -23,9 +25,11 @@ object FileProcessor {
       }
       else {
         val temp = line.split(',')
-        val data = new StockData(temp(0), temp(1).toFloat, temp(2).toFloat,
-                                 temp(3).toFloat, temp(4).toFloat, temp(5).toFloat,
-                                  temp(6).toInt)
+        val dateTemp = dateArray(temp(0))
+
+        val data = new StockData(dateTemp(0), dateTemp(1), dateTemp(2),
+                                 temp(1).toFloat, temp(2).toFloat, temp(3).toFloat,
+                                  temp(4).toFloat, temp(5).toFloat, temp(6).toInt)
         list.add(data)
       }
     }
@@ -40,9 +44,9 @@ object FileProcessor {
    * @param fileName the csv to be read
    * @return the LinkedList with all of the lines processed into objects
    */
-  def PPVDataFromCSV(fileName: String): LinkedList[DataWithDate] = {
+  def PPVDataFromCSV(fileName: String): LinkedList[Date] = {
     val source = Source.fromFile(fileName)
-    val list = new LinkedList[DataWithDate](null, null, 0)
+    val list = new LinkedList[Date](null, null, 0)
     var header = true
     for (line <- source.getLines) {
       if (header) {
@@ -50,11 +54,26 @@ object FileProcessor {
       }
       else {
         val temp = line.split(',')
-        val data = new PPVData(temp(0), temp(1))
+        val dateTemp = dateArray(temp(0))
+
+        val data = new PPVData(dateTemp(0), dateTemp(1), dateTemp(2), temp(1))
         list.add(data)
       }
     }
     source.close()
     list
+  }
+
+
+  /**
+   * A utility method for turning a date string into
+   * an Array of ints
+   *
+   * @param str the input date formatted as year-month-date
+   * @return the Array(year, month, date) with each member as an int
+   */
+  def dateArray(str: String): Array[Int] = {
+    val temp = str.split('-')
+    Array(temp(0).toInt, temp(1).toInt, temp(2).toInt)
   }
 }

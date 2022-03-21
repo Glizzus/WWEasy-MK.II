@@ -1,3 +1,4 @@
+import scala.annotation.tailrec
 import scala.collection.Iterator
 
 /**
@@ -31,7 +32,6 @@ class LinkedList[A <: Ordered[A]]
   override def isEmpty: Boolean = listSize == 0
 
 
-  // TODO: make this method more functional
   /**
    * This method adds an element to the LinkedList with regard to the defined order.
    *
@@ -60,32 +60,20 @@ class LinkedList[A <: Ordered[A]]
       back = newNode
       listSize += 1
     }
-    //TODO: refactor this, the nesting is ugly and a utility method could be used
     else {
-
       var walker = front
       while ((walker.next != null) && (walker.element.compare(element) < 0)) {
         walker = walker.next
       }
-      if (walker.next == null) {
-        newNode.next = null
-        newNode.prev = back
-        back.next = newNode
-        back = newNode
-        listSize += 1
-      }
-      else {
-        newNode.next = walker
-        walker.prev.next = newNode
-        newNode.prev = walker.prev
-        walker.prev = newNode
-        listSize += 1
-      }
+      newNode.next = walker
+      walker.prev.next = newNode
+      newNode.prev = walker.prev
+      walker.prev = newNode
+      listSize += 1
     }
   }
 
 
-  // TODO: make this method more functional
   /**
    * Removes an element from the LinkedList. The element must not be null, it must
    * not exist in the LinkedList, and the LinkedList should not be empty.
@@ -94,7 +82,7 @@ class LinkedList[A <: Ordered[A]]
    */
   override def remove(element: A): Unit = {
     if element == null then throw new NullPointerException("Element can not be null")
-    else if isEmpty then throw new IndexOutOfBoundsException("LinkedList can not be empty")
+    else if isEmpty then throw new IllegalArgumentException("LinkedList can not be empty")
 
     else if (size == 1) {
       front = null
@@ -130,21 +118,21 @@ class LinkedList[A <: Ordered[A]]
   }
 
 
-  //TODO: make this method more functional (recursion?)
   /**
-   * Checks if the given element exists in the LinkedList
+   * Checks if the given element exists in the LinkedList.
+   * This employs tail recursion, which saves stack frames.
    *
    * @param element the element to be searched for
    * @return True if the element exits, false otherwise
    */
-  override def contains(element: A): Boolean = {
-    if element == null then throw new NullPointerException("Element can not be null")
-    var walker = front
-    while ((walker.next != null) && (walker.element.compare(element) < 0)) {
-      walker = walker.next
+  def contains(element: A): Boolean = {
+    @tailrec
+    def helper(element: A, node: Node[A]): Boolean = {
+      if listSize == 0 then false
+      else if node.element.compare(element) == 0 then true
+      else helper(element, node.next)
     }
-    if walker.element.compare(element) == 0 then return true
-    false
+    helper(element, front)
   }
 
 
@@ -241,7 +229,7 @@ class LinkedList[A <: Ordered[A]]
  * @param prev the previous Node that this Node points to
  * @tparam A any type
  */
-class Node[A](val element: A, var next: Node[A], var prev: Node[A]) {
+private class Node[A](val element: A, var next: Node[A], var prev: Node[A]) {
 
   def this(e: A) = {
     this(e, null, null)
@@ -256,7 +244,7 @@ class Node[A](val element: A, var next: Node[A], var prev: Node[A]) {
  *
  * @tparam A any type
  */
-trait List[A] {
+sealed trait List[A] {
 
   def add(element: A): Unit
 
