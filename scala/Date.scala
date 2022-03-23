@@ -23,13 +23,17 @@ trait Date extends Ordered[Date]{
    * @param that the object being compared
    * @return -1 if this < that, 0 if this == that, 1 else
    */
-  override def compare(that: Date): Int = this.year.compare(that.year).sign match {
-    case -1 => -1
-    case 1 => 1
-    case 0 => this.month.compare(that.month).sign match { //TODO: This nested match hurts to look at
-      case -1 => -1
-      case 1 => 1
-      case 0 => this.day.compare(that.day)
+  override def compare(that: Date): Int =  {
+    val yearComp = this.year.compare(that.year)
+    if yearComp != 0 then yearComp
+    else {          // This may be a lot of nesting, but it's readable
+      val monthComp = this.month.compare(that.month)
+      if monthComp != 0 then monthComp
+      else {
+        val dayComp = this.day.compare(that.day)
+        if dayComp != 0 then dayComp
+        else 0
+      }
     }
   }
 }

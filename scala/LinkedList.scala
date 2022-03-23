@@ -17,6 +17,14 @@ class LinkedList[A <: Ordered[A]]
 
 
   /**
+   * Auxiliary constructor that instantiates empty LinkedList[A].
+   */
+  def this() = {
+    this(null, null, 0)
+  }
+
+
+  /**
    * Returns the size of the LinkedList.
    *
    * @return listSize
@@ -34,10 +42,12 @@ class LinkedList[A <: Ordered[A]]
 
   /**
    * This method adds an element to the LinkedList with regard to the defined order.
+   * I saw an operator override in the Scala source code and thought it was cool.
+   * For readability's sake, this may be replaced with a method named add()
    *
    * @param element any element of generic type A that implements Ordered[A]
    */
-  override def add(element: A): Unit = {
+  override def += (element: A): Unit = {
     if element == null then throw new NullPointerException("Element can not be null")
     val newNode = new Node(element)
 
@@ -71,16 +81,22 @@ class LinkedList[A <: Ordered[A]]
       walker.prev = newNode
       listSize += 1
     }
+
   }
+
+
+
 
 
   /**
    * Removes an element from the LinkedList. The element must not be null, it must
    * not exist in the LinkedList, and the LinkedList should not be empty.
+   * I saw an operator override in the Scala source code and thought it was cool.
+   * For readability's sake, this may be replaced with a method named remove()
    *
    * @param element the element to be removed from the LinkedList
    */
-  override def remove(element: A): Unit = {
+  override def -= (element: A): Unit = {
     if element == null then throw new NullPointerException("Element can not be null")
     else if isEmpty then throw new IllegalArgumentException("LinkedList can not be empty")
 
@@ -168,7 +184,7 @@ class LinkedList[A <: Ordered[A]]
     val copy = new LinkedList[A](front = null, back = null, listSize = 0)
     val iter = iterator
     while (iter.hasNext) {
-      copy.add(iter.next)
+      copy += iter.next
     }
     copy
   }
@@ -188,14 +204,14 @@ class LinkedList[A <: Ordered[A]]
     if (copy1.size < copy2.size) { // Merges the smaller list onto the larger list
       val iter = copy1.iterator
       while (iter.hasNext) {
-        copy2.add(iter.next)
+        copy2 += iter.next
       }
       copy2
     }
     else { // Merges the smaller list onto the larger list
       val iter = copy2.iterator
       while (iter.hasNext) {
-        copy1.add(iter.next)
+        copy1 += iter.next
       }
       copy1
     }
@@ -215,6 +231,13 @@ class LinkedList[A <: Ordered[A]]
       result += iter.next.toString
       result += "\n"
     }
+    result
+  }
+
+
+  def toString(header: String): String = {
+    var result = s"$header\n"
+    result += this.toString
     result
   }
 }
@@ -246,9 +269,9 @@ private class Node[A](val element: A, var next: Node[A], var prev: Node[A]) {
  */
 sealed trait List[A] {
 
-  def add(element: A): Unit
+  def += (element: A): Unit
 
-  def remove(element: A): Unit
+  def -= (element: A): Unit
 
   def contains(element: A): Boolean
 

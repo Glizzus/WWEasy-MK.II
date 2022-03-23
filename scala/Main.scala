@@ -1,21 +1,15 @@
+import FileProcessor.* //bad practice, but it works for now
+
 object Main extends App {
 
 
-  val stockList: LinkedList[Date] = FileProcessor.stockDataFromCSV("src/Resources/all_time_by_month.csv")
+  val stockList: LinkedList[Date] = stockDataFromCSV("src/Resources/all_time_by_month.csv")
+  val ppvList: LinkedList[Date] = PPVDataFromCSV("src/Resources/ppv_dates.csv")
 
 
-  val ppvList: LinkedList[Date] = FileProcessor.PPVDataFromCSV("src/Resources/ppv_dates.csv")
-
-
-
-  val stock = new StockData(2022, 02, 19, 35.28, 38.69, 33.23, 38.15, 36.839993, 19497000)
-
-  val ec = new PPVData(2022, 02, 19, "Elimination Chamber")
-  print(ec.compare(new PPVData(2022, 02, 19, "piss")) == 0) // true
-  print(ec.compare(stock) == 0) //true
-  print(ec.equals(ec)) //false
-  print(ec.equals(new PPVData(2022, 02, 19, "piss"))) //false
-
+  // This works exactly like I wanted it to, but it's implementation is confusing
+  val dataWithHeader = makeHeaderDataTuple("src/Resources/all_time_by_month.csv", getCSVHeader, stockDataFromCSV)
+  println(dataWithHeader(1).toString(dataWithHeader(0)))
 
 
 

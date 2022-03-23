@@ -50,7 +50,7 @@ class StockData(val year: Int, val month: Int, val day: Int, // TODO: Consolidat
     case _ => false
   }
 
-  
+
   /**
    * Compares StockData objects by date in ascending order.
    * Unlike equals(), which checks every field, this only compares dates
