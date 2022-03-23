@@ -51,9 +51,8 @@ class PPVData(val year: Int, val month: Int, val day: Int, val ppv: String)
    */
   override def compare(that: Date): Int = super.compare(that)
 
-/**
+  /**
    * Formats a PPVData object as a String on one line
-   *
    * @return PPVData as a String
    */
   override def toString: String = {

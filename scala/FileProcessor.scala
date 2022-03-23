@@ -11,6 +11,8 @@ object FileProcessor {
   // TODO: Fix how this code works with headers
   /**
    * Generates a list of StockData from a CSV file.
+   * This runs in worse-case O(N**2) time, but with sorted data (such as most csv files),
+   * it runs in O(N) time.
    *
    * @param csv the csv to be read
    * @param header whether the CSV has a header or not
@@ -44,6 +46,8 @@ object FileProcessor {
 
   /**
    * Generates a list of PPVData from a CSV file.
+   * This runs in worse-case O(N**2) time, but with sorted data (such as most csv files),
+   * it runs in O(N) time.
    *
    * @param csv the csv to be read
    * @return the LinkedList with all of the lines processed into objects
@@ -76,7 +80,7 @@ object FileProcessor {
    * This method extracts the header from a csv file.
    *
    * @param fileName the fileName to get the csv header from
-   * @return
+   * @return the header of the csv file
    */
   def getCSVHeader(fileName: String): String = {
     val source = Source.fromFile(fileName)
@@ -87,11 +91,17 @@ object FileProcessor {
 
 
   // TODO: rename this function
-  def makeHeaderDataTuple(csv: String,
-                          headerFunc: String => String,
-                          dataFunc: (String, Boolean) => LinkedList[Date]): (String, LinkedList[Date]) = {
-    (headerFunc(csv), dataFunc(csv, true))
-  }
+
+  /**
+   * This function returns a tuple containing a .csv header and its data as a LinkedList
+   *
+   * @param csv the file to be read
+   * @param csvFunc the function to operate on the file. The function must take a .csv file and return a boolean
+   * @return a tuple of the form (header, LinkedList[Date])
+   */
+  def makeHeaderDataTuple(csv: String, csvFunc: (String, Boolean) => LinkedList[Date]):
+                           (String, LinkedList[Date]) = (getCSVHeader(csv), csvFunc(csv, true))
+
 
   /**
    * A utility method for turning a date string into
@@ -105,7 +115,12 @@ object FileProcessor {
     Array(temp(0).toInt, temp(1).toInt, temp(2).toInt)
   }
 
-
+  /**
+   * Determines if a given file is a .csv file
+   * 
+   * @param fileName the file to be checked
+   * @return true if the file is a csv, false otherwise
+   */
   def isCSV(fileName: String): Boolean = fileName.takeRight(4) == ".csv"
 
 }

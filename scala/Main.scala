@@ -8,7 +8,7 @@ object Main extends App {
 
 
   // This works exactly like I wanted it to, but it's implementation is confusing
-  val dataWithHeader = makeHeaderDataTuple("src/Resources/all_time_by_month.csv", getCSVHeader, stockDataFromCSV)
+  val dataWithHeader = makeHeaderDataTuple("src/Resources/all_time_by_month.csv", stockDataFromCSV)
   println(dataWithHeader(1).toString(dataWithHeader(0)))
 
 

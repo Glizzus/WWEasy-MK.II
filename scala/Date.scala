@@ -12,8 +12,8 @@ trait Date extends Ordered[Date]{
 
 
   /**
-   * 
-   * @return
+   * Formats a date as a String in yyyy-mm-dd form
+   * @return the date as a String
    */
   override def toString: String = f"$year-$month%02d-$day%02d"
 
@@ -26,7 +26,7 @@ trait Date extends Ordered[Date]{
   override def compare(that: Date): Int =  {
     val yearComp = this.year.compare(that.year)
     if yearComp != 0 then yearComp
-    else {          // This may be a lot of nesting, but it's readable
+    else {          
       val monthComp = this.month.compare(that.month)
       if monthComp != 0 then monthComp
       else {

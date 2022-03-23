@@ -63,7 +63,6 @@ class StockData(val year: Int, val month: Int, val day: Int, // TODO: Consolidat
 
   /**
    * Formats a StockData object as a String on a single line
-   *
    * @return StockData as a String
    */
   override def toString: String = {
