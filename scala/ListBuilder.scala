@@ -2,6 +2,7 @@ import scala.annotation.tailrec
 import scala.collection.{Iterator, mutable}
 import scala.collection.mutable.Stack
 
+//TODO: There is a lot of dead code here
 
 /**
  * A collection for building lists. This was implemented because Scala's ListBuffer doesn't easily support
@@ -202,10 +203,7 @@ class ListBuilder[A <: Ordered[A]]
     }
     stack.toList
   }
-
-
-
-
+  
   /**
    * A method that makes a copy of a list without mutating the original list
    * @return copy the list that was copied.
@@ -218,8 +216,7 @@ class ListBuilder[A <: Ordered[A]]
     }
     copy
   }
-
-
+  
   /**
    * A method that returns the merging of two lists, without
    * mutating the original lists.
@@ -246,8 +243,7 @@ class ListBuilder[A <: Ordered[A]]
       copy1
     }
   }
-
-
+  
   /**
    * Formats a ListBuilder as a String, with each object
    * represented as a String on its own line
@@ -262,8 +258,7 @@ class ListBuilder[A <: Ordered[A]]
     }
     result
   }
-
-
+  
   /**
    * An alternative toString method for use with headers.
    * 

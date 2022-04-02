@@ -1,14 +1,13 @@
-import FileProcessor._
 import MenuManager._
 
 object Main extends App {
 
-  mainGreeting()
+  MenuManager.greet()
   val input = getInput
-  val manager = matchInput(input)
+  val manager = handleInput()
 
   manager.greet()
-  
+  manager.handleInput()
 
 
 

@@ -33,11 +33,10 @@ class PPVData(val year: Int, val month: Int, val day: Int, val ppv: String)
    */
   override def equals(that: Any): Boolean =
     that match {
-      case that: PPVData => {
+      case that: PPVData =>
         that.canEqual(this) &&
           this.compare(that) == 0 &&
           this.ppv == that.ppv
-      }
       case _ => false
     }
   

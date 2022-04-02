@@ -1,5 +1,7 @@
 import scala.io.Source
 
+//TODO: Add more exception handling
+
 /**
  * Contains methods for processing different types of files
  * into different types of objects.
