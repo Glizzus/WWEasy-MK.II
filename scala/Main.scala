@@ -1,15 +1,16 @@
-import FileProcessor.* //bad practice, but it works for now
+import FileProcessor._
+import MenuManager._
 
 object Main extends App {
 
+  mainGreeting()
+  val input = getInput
+  val manager = matchInput(input)
 
-  val stockList: LinkedList[Date] = stockDataFromCSV("src/Resources/all_time_by_month.csv")
-  val ppvList: LinkedList[Date] = PPVDataFromCSV("src/Resources/ppv_dates.csv")
+  manager.greet()
+  
 
 
-  // This works exactly like I wanted it to, but it's implementation is confusing
-  val dataWithHeader = makeHeaderDataTuple("src/Resources/all_time_by_month.csv", stockDataFromCSV)
-  println(dataWithHeader(1).toString(dataWithHeader(0)))
 
 
 

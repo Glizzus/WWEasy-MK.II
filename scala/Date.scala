@@ -5,7 +5,7 @@ import scala.math.Ordered
  * 
  * @author Cal Crosby
  */
-trait Date extends Ordered[Date]{
+trait Date extends Ordered[Date] {
   val year: Int
   val month: Int
   val day: Int

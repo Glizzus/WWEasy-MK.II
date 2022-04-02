@@ -18,11 +18,11 @@ object FileProcessor {
    * @param header whether the CSV has a header or not
    * @return the LinkedList with all of the lines processed into objects
    */
-  def stockDataFromCSV(csv: String, header: Boolean = true): LinkedList[Date] = {
+  def stockDataFromCSV(csv: String, header: Boolean = true): List[Date] = {
     if !isCSV(csv) then throw new IllegalArgumentException("File is not a csv file")
 
     val source = Source.fromFile(csv)
-    val list = new LinkedList[Date]
+    val listBuilder = new ListBuilder[Date]
 
     var headerSwitch = true  // TODO: This is some of the worst code I have ever written.
     for (line <- source.getLines) {
@@ -36,11 +36,11 @@ object FileProcessor {
         val data = new StockData(dateTemp(0), dateTemp(1), dateTemp(2),
                                  temp(1).toFloat, temp(2).toFloat, temp(3).toFloat,
                                   temp(4).toFloat, temp(5).toFloat, temp(6).toInt)
-        list += data
+        listBuilder += data
       }
     }
     source.close()
-    list
+    listBuilder.toList
   }
 
 
@@ -52,11 +52,11 @@ object FileProcessor {
    * @param csv the csv to be read
    * @return the LinkedList with all of the lines processed into objects
    */
-  def PPVDataFromCSV(csv: String, header: Boolean = true): LinkedList[Date] = {
+  def PPVDataFromCSV(csv: String, header: Boolean = true): List[Date] = {
     if !isCSV(csv) then throw new IllegalArgumentException("File is not a csv file")
 
     val source = Source.fromFile(csv)
-    val list = new LinkedList[Date]
+    val listBuilder = new ListBuilder[Date]
 
     var headerSwitch = true  // TODO: This is some of the worst code I have ever written.
     for (line <- source.getLines) {
@@ -68,11 +68,11 @@ object FileProcessor {
         val dateTemp = dateArray(temp(0))
 
         val data = new PPVData(dateTemp(0), dateTemp(1), dateTemp(2), temp(1))
-        list += data
+        listBuilder += data
       }
     }
     source.close()
-    list
+    listBuilder.toList
   }
 
 
@@ -99,8 +99,8 @@ object FileProcessor {
    * @param csvFunc the function to operate on the file. The function must take a .csv file and return a boolean
    * @return a tuple of the form (header, LinkedList[Date])
    */
-  def makeHeaderDataTuple(csv: String, csvFunc: (String, Boolean) => LinkedList[Date]):
-                           (String, LinkedList[Date]) = (getCSVHeader(csv), csvFunc(csv, true))
+  def makeHeaderDataTuple(csv: String, csvFunc: (String, Boolean) => List[Date]):
+                           (String, List[Date]) = (getCSVHeader(csv), csvFunc(csv, true))
 
 
   /**
@@ -110,7 +110,7 @@ object FileProcessor {
    * @param str the input date formatted as year-month-date
    * @return the Array(year, month, date) with each member as an int
    */
-  def dateArray(str: String): Array[Int] = {
+  private def dateArray(str: String): Array[Int] = {
     val temp = str.split('-')
     Array(temp(0).toInt, temp(1).toInt, temp(2).toInt)
   }
@@ -121,6 +121,6 @@ object FileProcessor {
    * @param fileName the file to be checked
    * @return true if the file is a csv, false otherwise
    */
-  def isCSV(fileName: String): Boolean = fileName.takeRight(4) == ".csv"
+  private def isCSV(fileName: String): Boolean = fileName.takeRight(4) == ".csv"
 
 }

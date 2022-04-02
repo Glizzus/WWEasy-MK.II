@@ -27,8 +27,7 @@ class StockData(val year: Int, val month: Int, val day: Int, // TODO: Consolidat
    * @return true if checking is allowed, false otherwise
    */
   def canEqual(obj: Any): Boolean = obj.isInstanceOf[StockData]
-
-
+  
   /**
    * Checks if two StockData objects are equal. Unlike compare(), which
    * only checks the date, this method checks every field
@@ -37,7 +36,7 @@ class StockData(val year: Int, val month: Int, val day: Int, // TODO: Consolidat
    * @return true if equal, false otherwise
    */
   override def equals(that: Any): Boolean = that match {
-    case that: StockData => {
+    case that: StockData =>
       that.canEqual(this) &&
         this.compare(that) == 0 && //this checks if the dates are equal
         this.open == that.open &&
@@ -46,11 +45,9 @@ class StockData(val year: Int, val month: Int, val day: Int, // TODO: Consolidat
         this.close == that.close &&
         this.adjClose == that.adjClose &&
         this.volume == that.volume
-    }
     case _ => false
   }
-
-
+  
   /**
    * Compares StockData objects by date in ascending order.
    * Unlike equals(), which checks every field, this only compares dates
@@ -59,8 +56,7 @@ class StockData(val year: Int, val month: Int, val day: Int, // TODO: Consolidat
    * @return A negative integer if this < that, 0 if this == that, a positive integer otherwise
    */
   override def compare(that: Date): Int = super.compare(that)
-
-
+  
   /**
    * Formats a StockData object as a String on a single line
    * @return StockData as a String
