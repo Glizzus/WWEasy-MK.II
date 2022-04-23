@@ -1,128 +1,59 @@
-import scala.io.Source
+import scala.annotation.tailrec
+import scala.collection.immutable.TreeMap
 
-//TODO: Add more exception handling
+case object FileProcessor {
 
-/**
- * Contains methods for processing different types of files
- * into different types of objects.
- *
- * @author Cal Crosby
- */
-object FileProcessor {
-
-  // TODO: Fix how this code works with headers
   /**
-   * Generates a list of StockData from a CSV file.
-   * This runs in worse-case O(N**2) time, but with sorted data (such as most csv files),
-   * it runs in O(N) time.
-   *
-   * @param csv the csv to be read
-   * @param header whether the CSV has a header or not
-   * @return the LinkedList with all of the lines processed into objects
+   * A method that converts a csv of valid data types into a DateMap. The valid data types currently include
+   * StockData and Ppv.
+   * @param fileName the name of the .csv file to be read in
+   * @param dataType a char which represents the type of the data to be parsed
+   * @return a DateMap with each date as a key to the respective data
    */
-  def stockDataFromCSV(csv: String, header: Boolean = true): List[Date] = {
-    if !isCSV(csv) then throw new IllegalArgumentException("File is not a csv file")
+  def csvToDateMap(fileName: String, dataType: String): DateMap = {
+    if (!isValidType(dataType)) throw new IllegalArgumentException("Invalid type of data requested")
+    if (!isCsv(fileName)) throw new IllegalArgumentException("File is not .csv file")
+    val buffered = scala.io.Source.fromFile(fileName)
+    val lines = buffered.getLines()
 
-    val source = Source.fromFile(csv)
-    val listBuilder = new ListBuilder[Date]
-
-    var headerSwitch = true  // TODO: This is some of the worst code I have ever written.
-    for (line <- source.getLines) {
-      if (header && headerSwitch) {
-        headerSwitch = false
-      }
+    @tailrec
+    def tailRecParser(map: TreeMap[Date, Any], lines: Iterator[String]): TreeMap[Date, Any] = {
+      if !lines.hasNext then map
       else {
-        val temp = line.split(',')
-        val dateTemp = dateArray(temp(0))
-
-        val data = new StockData(dateTemp(0), dateTemp(1), dateTemp(2),
-                                 temp(1).toFloat, temp(2).toFloat, temp(3).toFloat,
-                                  temp(4).toFloat, temp(5).toFloat, temp(6).toInt)
-        listBuilder += data
+        val line = lines.next().split(',')
+        val date = parseDate(line(0))
+        dataType.toLowerCase() match {
+          case "ppv" =>
+            tailRecParser(map + (date -> parsePpv(line)), lines)
+          case "stockdata" => parseStockData(line)
+            tailRecParser(map + (date -> parseStockData(line)), lines)
+        }
       }
     }
-    source.close()
-    listBuilder.toList
+    lines.next() // This skips the CSV header
+    val csvMap = tailRecParser(TreeMap[Date, Any](), lines)
+    buffered.close
+    DateMap(csvMap)
   }
 
-
-  /**
-   * Generates a list of PPVData from a CSV file.
-   * This runs in worse-case O(N**2) time, but with sorted data (such as most csv files),
-   * it runs in O(N) time.
-   *
-   * @param csv the csv to be read
-   * @return the LinkedList with all of the lines processed into objects
-   */
-  def PPVDataFromCSV(csv: String, header: Boolean = true): List[Date] = {
-    if !isCSV(csv) then throw new IllegalArgumentException("File is not a csv file")
-
-    val source = Source.fromFile(csv)
-    val listBuilder = new ListBuilder[Date]
-
-    var headerSwitch = true  // TODO: This is some of the worst code I have ever written.
-    for (line <- source.getLines) {
-      if (header && headerSwitch) {
-        headerSwitch = false
-      }
-      else {
-        val temp = line.split(',')
-        val dateTemp = dateArray(temp(0))
-
-        val data = new PPVData(dateTemp(0), dateTemp(1), dateTemp(2), temp(1))
-        listBuilder += data
-      }
-    }
-    source.close()
-    listBuilder.toList
+  def isCsv(fileName: String): Boolean = {
+    fileName.length() > 4 && fileName.takeRight(4) == ".csv"
   }
 
-
-  /**
-   * This method extracts the header from a csv file.
-   *
-   * @param fileName the fileName to get the csv header from
-   * @return the header of the csv file
-   */
-  def getCSVHeader(fileName: String): String = {
-    val source = Source.fromFile(fileName)
-    val header = source.getLines.next
-    source.close()
-    header
+  def isValidType(dataType: String): Boolean = {
+    val validTypes = List("ppv", "stockdata")
+    validTypes.contains(dataType.toLowerCase)
   }
 
-
-  // TODO: rename this function
-
-  /**
-   * This function returns a tuple containing a .csv header and its data as a LinkedList
-   *
-   * @param csv the file to be read
-   * @param csvFunc the function to operate on the file. The function must take a .csv file and return a boolean
-   * @return a tuple of the form (header, LinkedList[Date])
-   */
-  def makeHeaderDataTuple(csv: String, csvFunc: (String, Boolean) => List[Date]):
-                           (String, List[Date]) = (getCSVHeader(csv), csvFunc(csv, true))
-
-
-  /**
-   * A utility method for turning a date string into
-   * an Array of ints
-   *
-   * @param str the input date formatted as year-month-date
-   * @return the Array(year, month, date) with each member as an int
-   */
-  private def dateArray(str: String): Array[Int] = {
-    val temp = str.split('-')
-    Array(temp(0).toInt, temp(1).toInt, temp(2).toInt)
+  def parseDate(strDate: String): Date = {
+    val splitDate = strDate.split('-')
+    Date(splitDate(0).toInt, splitDate(1).toInt, splitDate(2).toInt)
   }
 
-  /**
-   * Determines if a given file is a .csv file
-   * 
-   * @param fileName the file to be checked
-   * @return true if the file is a csv, false otherwise
-   */
-  private def isCSV(fileName: String): Boolean = fileName.takeRight(4) == ".csv"
+  def parsePpv(line: Array[String]): Ppv = Ppv(line(1))
 
+  def parseStockData(line: Array[String]): StockData = {
+    StockData(line(1).toFloat, line(2).toFloat, line(3).toFloat,
+              line(4).toFloat, line(5).toFloat, line(6).toInt)
+  }
 }

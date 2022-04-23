@@ -1,6 +1,6 @@
 import scala.annotation.targetName
 import scala.collection.immutable.TreeMap
-import java.text.SimpleDateFormat
+
 
 case class DateMap(data: TreeMap[Date, Any]) {
 
@@ -9,7 +9,9 @@ case class DateMap(data: TreeMap[Date, Any]) {
   def + (key: Date, any: Any): Map[Date, Any] = {
     data + (key->any)
   }
-  
+
+
+
   override def toString: String = data.mkString("\n")
 
   def filterByDate(strDate: String, operator: Char): DateMap = {
@@ -20,6 +22,10 @@ case class DateMap(data: TreeMap[Date, Any]) {
       case '=' => DateMap(data.filter((k, _) => k.equals(date)))
       case _ => throw new IllegalArgumentException()
     }
+  }
+
+  def merge(that: DateMap): DateMap = {
+    DateMap(this.data ++ that.data)
   }
 
   def parseDate(date: String): Date = {
