@@ -17,7 +17,7 @@ case object DataProcessor {
    */
   def csvToDateMap(fileName: String, dataType: String): DateMap = {
     if (!isValidType(dataType)) throw new IllegalArgumentException("Invalid type of data requested")
-    if (!isCsv(fileName)) throw new IllegalArgumentException("File is not .csv file")
+    if (!isValidFile(fileName)) throw new IllegalArgumentException("File is not .csv file")
     val buffered = scala.io.Source.fromFile(fileName)
     val lines = buffered.getLines()
 
@@ -28,10 +28,12 @@ case object DataProcessor {
         val line = lines.next().split(',')
         val date = parseDate(line(0), '-')
         dataType.toLowerCase() match {
-          case "ppvdata" =>
+          case "-p" | "-ppv" =>
             tailRecParser(map + (date -> parsePpvData(line)), lines)
-          case "stockdata" => parseStockData(line)
+          case "-s" | "-stock" => parseStockData(line)
             tailRecParser(map + (date -> parseStockData(line)), lines)
+          case "-r" | "-ratings" =>
+            tailRecParser(map + (date -> parseRatingsData(line)), lines)
         }
       }
     }
@@ -42,13 +44,14 @@ case object DataProcessor {
   }
 
 
-  def isCsv(fileName: String): Boolean = {
-    fileName.length() > 4 && fileName.takeRight(4) == ".csv"
+  def isValidFile(fileName: String): Boolean = {
+    fileName.length() > 4 && fileName.takeRight(4) == ".csv" &&
+      java.io.File(fileName).exists()
   }
 
 
   def isValidType(dataType: String): Boolean = {
-    val validTypes = List("ppvdata", "stockdata")
+    val validTypes = List("-p", "-ppv", "-s", "-stock", "-r", "-ratings")
     validTypes.contains(dataType.toLowerCase)
   }
 
@@ -65,5 +68,11 @@ case object DataProcessor {
   def parseStockData(line: Array[String]): StockData = {
     StockData(line(1).toFloat, line(2).toFloat, line(3).toFloat,
               line(4).toFloat, line(5).toFloat, line(6).toInt)
+  }
+
+  def parseRatingsData(line: Array[String]): RatingsData = {
+    RatingsData(line(1),
+      line(2).toFloatOption.getOrElse(-1.toFloat),
+      line(3).toIntOption.getOrElse(-1))
   }
 }

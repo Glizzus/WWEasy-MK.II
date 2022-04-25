@@ -7,25 +7,28 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 
-/**
- * This aids in gathering WWE ratings data from <a href="www.wrestlingdata.com">www.wrestlingdata.com</a>.
+/** This aids in gathering WWE ratings data from www.wrestlingdata.com.
+ *
  * It employs multithreading to web scrape the aforementioned website and creates a csv file for use elsewhere.
  *
  * @author Cal Crosby
  */
 public class RatingsCsvCreator {
 
-    // This is the base of the url that contains the data. Each page number is tacked on at the end.
-    public static final String BASE_URL =
-            "https://www.wrestlingdata.com/index.php?befehl=quoten&art=2&liga=1&show=&sort=0&seite=";
-    String url;
+    private String url;
     private final ArrayList<String> dates = new ArrayList<>();
     private final ArrayList<String> events = new ArrayList<>();
-    private final ArrayList<String> ratings = new ArrayList<>();
+    private final ArrayList<String> relRatings = new ArrayList<>();
+    private final ArrayList<String> absRatings = new ArrayList<>();
 
 
-     Document tryGetDocument() throws IOException {
-        return Jsoup.connect(url).get();
+     Document tryGetDocument(String urlIn) {
+        try {
+            return Jsoup.connect(urlIn).get();
+        }
+        catch (IOException e) {
+            throw new RuntimeException("Could not retrieve the webpage");
+         }
     }
 
     /**
@@ -35,14 +38,8 @@ public class RatingsCsvCreator {
         Thread thread;
         @Override
         public void run() {
-            Document doc;
-            try {
-                doc = tryGetDocument();
-            }
-            catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            Elements elems = doc.select("table") // The HTML was not well designed; this was the only way
+            Document doc = tryGetDocument(url);
+            Elements elems = doc.select("table") // The HTML was not well-designed; this was the only way
                     .select("td[align=center][bgcolor=#660000][style=with:20%;]");
             for (Element e : elems) {
                 dates.add(e.text());
@@ -66,13 +63,7 @@ public class RatingsCsvCreator {
         Thread thread;
         @Override
         public void run() {
-            Document doc;
-            try {
-                doc = tryGetDocument();
-            }
-            catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            Document doc = tryGetDocument(url);
             Elements elems = doc.select("table")
                     .select("div[title=Show event]");
             for (Element e : elems) {
@@ -98,17 +89,14 @@ public class RatingsCsvCreator {
         Thread thread;
         @Override
         public void run() {
-            Document doc;
-            try {
-                doc = tryGetDocument();
-            }
-            catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            Document doc = tryGetDocument(url);
             Elements elems = doc.select("table")
                     .select("td[style=width:13%;][bgcolor=#660000]");
             for (int i = 1; i < elems.size(); i += 2) {
-                ratings.add(elems.get(i).text());
+                absRatings.add(elems.get(i).text());
+            }
+            for (int i = 0; i < elems.size(); i += 2) {
+                relRatings.add(elems.get(i).text());
             }
         }
         public void start() {
@@ -130,15 +118,17 @@ public class RatingsCsvCreator {
     public void writeFile() throws InterruptedException, IOException {
 
         try (FileWriter f = new FileWriter("src/main/Resources/ratings.csv")) {
-            f.write("Date,Event,Rating");
+            f.write("Date,Event,Rating\n");
         }
         catch (IOException e) {
             throw new RuntimeException("Failed to create new file");
         }
-        // Currently, the website has 69 pages of data
-        for (int page = 69; page > 0; page--) { // TODO: Make the page count a constant
+        int pageCount = 69;
+        for (int page = pageCount; page > 0; page--) {
 
-            url = BASE_URL + page;
+            // This is the base of the url that contains the data. Each page number is tacked on at the end.
+            String baseUrl = "https://www.wrestlingdata.com/index.php?befehl=quoten&art=2&liga=1&show=&sort=0&seite=";
+            url = baseUrl + page;
 
             DateScraper dateScrape = new DateScraper();
             dateScrape.start();
@@ -155,14 +145,16 @@ public class RatingsCsvCreator {
             try {
                 csv = new FileWriter("src/main/Resources/ratings.csv", true);
                 for (int j = dates.size() - 1; j >= 0; j--) {
-                    csv.write(String.format("%s,%s,%s\n",
+                    csv.write(String.format("%s,%s,%s,%s\n",
                             dates.get(j).replace('/', '-'),
                             events.get(j),
-                            ratings.get(j).replaceAll(",", "")));
+                            relRatings.get(j),
+                            absRatings.get(j).replaceAll(",", "")));
                 }
                 dates.clear();
                 events.clear();
-                ratings.clear();
+                relRatings.clear();
+                absRatings.clear();
             }
             catch (IOException e) {
                 throw new RuntimeException("Failed to write to file");
@@ -171,5 +163,9 @@ public class RatingsCsvCreator {
                 csv.close();
             }
         }
+    }
+
+    public static void main(String[] args) throws IOException, InterruptedException {
+        new RatingsCsvCreator().writeFile();
     }
 }

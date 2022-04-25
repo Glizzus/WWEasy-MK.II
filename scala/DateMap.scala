@@ -19,12 +19,12 @@ case class DateMap(data: TreeMap[Date, Any]) {
    * @throws IllegalArgumentException if the relational operator is not <, =, >
    * @return A new DateMap with only the filtered values.
    */
-  def filterByDate(strDate: String, operator: Char): DateMap = {
+  def filterByDate(strDate: String, operator: String): DateMap = {
     val date = DataProcessor.parseDate(strDate, '-')
     operator match {
-      case '<' => DateMap(data.filter((k, _) => k.compare(date) < 0))
-      case '>' => DateMap(data.filter((k, _) => k.compare(date) > 0))
-      case '=' => DateMap(data.filter((k, _) => k.equals(date)))
+      case "<" => DateMap(data.filter((k, _) => k.compare(date) < 0))
+      case ">" => DateMap(data.filter((k, _) => k.compare(date) > 0))
+      case "=" => DateMap(data.filter((k, _) => k.equals(date)))
       case _ => throw new IllegalArgumentException()
     }
   }
@@ -38,4 +38,9 @@ case class DateMap(data: TreeMap[Date, Any]) {
   def merge(that: DateMap): DateMap = {
     DateMap(this.data ++ that.data)
   }
+
+  def filter(f: Any => Boolean): DateMap = {
+    DateMap(data.filter(f))
+  }
+
 }
