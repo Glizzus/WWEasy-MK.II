@@ -61,37 +61,32 @@ public final class WWERatingsCsvGrabber {
               url = urlIn;
         }
         public void run() {
-            System.out.println("Scraping " + toScrape);
               Document doc = tryGetDocument(url);
-            Elements elems;
-            switch (toScrape) {
-                case "dates" -> {
-                    elems = doc.select("table")
-                            .select("td[align=center][bgcolor=#660000][style=with:20%;]");
-                    for (Element e : elems) {
-                        System.out.println(e.text());
-                        results.dates.add(e.text());
+              Elements elems;
+              switch (toScrape) {
+                    case "dates" -> {
+                        elems = doc.select("table")
+                              .select("td[align=center][bgcolor=#660000][style=with:20%;]");
+                        for (Element e : elems) {
+                            results.dates.add(e.text());
+                        }
                     }
-                }
-                case "shows" -> {
-                    elems = doc.select("table").select("div[title=Show event]");
-                    for (Element e : elems) {
-                        System.out.println(e.text());
-                        results.shows.add(e.text());
+                    case "shows" -> {
+                        elems = doc.select("table").select("div[title=Show event]");
+                        for (Element e : elems) {
+                            results.shows.add(e.text());
+                        }
                     }
-                }
-                case "ratings" -> {
-                    elems = doc.select("table").select("td[style=width:13%;][bgcolor=#660000]");
-                    for (int i = 0; i < elems.size(); i += 2) {
-                        System.out.println(elems.get(i).text());
-                        results.relRatings.add(elems.get(i).text());
+                    case "ratings" -> {
+                        elems = doc.select("table").select("td[style=width:13%;][bgcolor=#660000]");
+                        for (int i = 0; i < elems.size(); i += 2) {
+                            results.relRatings.add(elems.get(i).text());
+                        }
+                        for (int i = 1; i < elems.size(); i += 2) {
+                            results.absRatings.add(elems.get(i).text());
+                        }
                     }
-                    for (int i = 1; i < elems.size(); i += 2) {
-                        System.out.println(elems.get(i).text());
-                        results.absRatings.add(elems.get(i).text());
-                    }
-                }
-                default -> throw new IllegalArgumentException();
+                    default -> throw new IllegalArgumentException();
             }
         }
         private void start() {
@@ -103,7 +98,6 @@ public final class WWERatingsCsvGrabber {
         }
         private ScrapeResults scrape() throws InterruptedException {
               start();
-              join();
               return results;
         }
     }

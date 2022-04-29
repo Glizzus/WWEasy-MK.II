@@ -7,3 +7,14 @@ h3 {
     color: #023E73;
     text-align: center;
 }
+
+#start, #end {
+    width: 230px;
+    color: slategrey;
+}
+
+.date-selector {
+    display: flex;
+    flex-direction: column;
+    color:#023E73;
+}

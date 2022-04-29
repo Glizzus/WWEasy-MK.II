@@ -14,6 +14,7 @@ case class RatingsData(title: String, relRating: Float, absRating: Int) {
 
   val isRaw: Boolean = title.contains("RAW")
   val isSmackDown: Boolean = title.contains("SmackDown")
+  val isNxt: Boolean = title.contains("NXT")
 
 }
 

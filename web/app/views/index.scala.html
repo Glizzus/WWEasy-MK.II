@@ -3,4 +3,20 @@
 @main("Welcome to WWEasy") {
   <h1>WWEasy</h1>
   <h3>WWE stock analysis made easy</h3>
+  <div class="date-selector">
+    <label for="start">Start date:</label>
+    <input type="date" id="start" name="start-date">
+    <label for="end">End date:</label>
+    <input type="date" id="end" name="end-date">
+  </div>
+  <div class="interval-radio">
+    <input type="radio" id="daily" name ="interval">
+    <label for="daily">daily</label>
+    <input type="radio" id="weekly" name="interval">
+    <label for="weekly">weekly</label>
+    <input type="radio" id="monthly" name="interval">
+    <label for="monthly">monthly</label>
+  </div>
 }
+
+
