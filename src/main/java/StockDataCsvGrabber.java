@@ -107,12 +107,26 @@ public class StockDataCsvGrabber {
         }
     }
 
+    /**
+     * Gets Inputs for all parameters.
+     *
+     * @return A String[] that functions as the parameter for main()
+     */
     private static String[] getInputs() {
+        System.out.print("Stock: ");
+        return getInputs(new Scanner(System.in).nextLine());
+    }
+
+    /**
+     * Gets Inputs for all parameters in main(), except for stock which is passed in to this method
+     *
+     * @param stock the ticker symbol of the stock to get data for
+     * @return a String[] that functions as the parameter for main()
+     */
+    private static String[] getInputs(String stock) {
         String[] inputs = new String[5];
         Scanner scan = new Scanner(System.in);
-        System.out.print("Stock: " );
-        inputs[0] = scan.nextLine();
-
+        inputs[0] = stock;
         do {
             System.out.print("Start date: ");
             inputs[1] = scan.nextLine();
@@ -164,10 +178,11 @@ public class StockDataCsvGrabber {
     }
 
     public static void main(String[] args) throws ParseException, IOException {
-        if (args.length == 0) getStockDataCsv(getInputs());
+        if (args.length == 0) getStockDataCsv(getInputs()); // get all input from user
+        if (args.length == 1) getStockDataCsv(getInputs(args[0])); // get all input except for the Stock
         else if (args.length != 5) throw new IllegalArgumentException();
         else {
-            getStockDataCsv(args);
+            getStockDataCsv(args); // get all input from command line arguments
         }
     }
 }

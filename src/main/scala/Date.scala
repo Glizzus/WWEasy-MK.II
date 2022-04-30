@@ -2,15 +2,12 @@
  *
  * It has extensive checking
  * that only valid calendar dates are entered, even making allowances for leap years.
- * Because this class is only to be used for WWE stock analysis, dates should come after 1998,
- * as WWE went public in 1998.
  *
  * @author Cal Crosby
  */
 case class Date(year: Int, month: Int, day: Int) extends Ordered[Date] {
 
-  
-  require(year > 1998, "Year should be greater than 1998") // WWE went public in 1999
+
   require(1 <= month && month <= 12, "Invalid value for month")
 
   // This defines which days are valid arguments

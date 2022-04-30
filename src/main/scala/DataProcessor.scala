@@ -58,6 +58,7 @@ case object DataProcessor {
 
   def parseDate(strDate: String, delimiter: Char): Date = {
     val splitDate = strDate.split(delimiter)
+
     Date(splitDate(0).toInt, splitDate(1).toInt, splitDate(2).toInt)
   }
 

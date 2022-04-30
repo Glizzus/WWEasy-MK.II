@@ -6,6 +6,8 @@ import org.jsoup.select.Elements;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 /** This aids in gathering WWE ratings data from www.wrestlingdata.com.
  *
@@ -19,15 +21,18 @@ public final class WWERatingsCsvGrabber {
     private WWERatingsCsvGrabber() {} // don't let anybody instantiate this class
 
 
-     private Document tryGetDocument(String urlIn) {
+    private static Document tryGetDocument(String urlIn) {
         try {
             return Jsoup.connect(urlIn).get();
         }
         catch (IOException e) {
             throw new RuntimeException("Could not retrieve the webpage");
-         }
+        }
     }
 
+    /**
+     * Encapsulates data for web scraping, as well as provides a method for formatting the dat as a csv line
+     */
     private static class ScrapeResults {
         ArrayList<String> dates = new ArrayList<>();
         ArrayList<String> shows = new ArrayList<>();
@@ -42,7 +47,7 @@ public final class WWERatingsCsvGrabber {
          */
         private String resultFormat(int i, int page) {
             // Ensures there is no newline for the last line of a .csv file
-            String form = (i == 0 && page == 1) ? "%s,%s,%s,%s" : "%s,%s,%s,%s\n";
+            String form = (page == 1 && i == 0) ? "%s,%s,%s,%s" : "%s,%s,%s,%s\n";
             return String.format(form,
                     dates.get(i).replace('/', '-'),
                     shows.get(i),
@@ -51,39 +56,32 @@ public final class WWERatingsCsvGrabber {
         }
     }
 
-    private class Scraper implements Runnable {
+    private static class ScrapeWorker implements Runnable {
           Thread thread;
           ScrapeResults results = new ScrapeResults();
           String toScrape;
           String url;
-          Scraper(String whatToScrape, String urlIn) {
+          ScrapeWorker(String whatToScrape, String urlIn) {
               toScrape = whatToScrape;
               url = urlIn;
         }
         public void run() {
               Document doc = tryGetDocument(url);
-              Elements elems;
+              Elements tables = doc.select("table");
               switch (toScrape) {
-                    case "dates" -> {
-                        elems = doc.select("table")
-                              .select("td[align=center][bgcolor=#660000][style=with:20%;]");
-                        for (Element e : elems) {
-                            results.dates.add(e.text());
-                        }
-                    }
-                    case "shows" -> {
-                        elems = doc.select("table").select("div[title=Show event]");
-                        for (Element e : elems) {
-                            results.shows.add(e.text());
-                        }
-                    }
+                    case "dates" ->
+                            tables.select("td[align=center][bgcolor=#660000][style=with:20%;]").
+                                    forEach(x -> results.dates.add(x.text()));
+
+                    case "shows" ->
+                            tables.select("div[title=Show event]")
+                                .forEach(x -> results.shows.add(x.text()));
+
                     case "ratings" -> {
-                        elems = doc.select("table").select("td[style=width:13%;][bgcolor=#660000]");
-                        for (int i = 0; i < elems.size(); i += 2) {
-                            results.relRatings.add(elems.get(i).text());
-                        }
-                        for (int i = 1; i < elems.size(); i += 2) {
-                            results.absRatings.add(elems.get(i).text());
+                        Elements ratings = tables.select("td[style=width:13%;][bgcolor=#660000]");
+                        for (int i = 0; i < ratings.size(); i++) {
+                            results.relRatings.add(ratings.get(i).text()); // relative ratings at even indices
+                            results.absRatings.add(ratings.get(++i).text()); // absolute ratings are at odd indices
                         }
                     }
                     default -> throw new IllegalArgumentException();
@@ -96,16 +94,16 @@ public final class WWERatingsCsvGrabber {
         private void join() throws InterruptedException {
               this.thread.join();
         }
-        private ScrapeResults scrape() throws InterruptedException {
+        private ScrapeResults scrape() {
               start();
               return results;
         }
     }
 
     private ScrapeResults scrapePage(String url) throws InterruptedException {
-        Scraper dateScraper = new Scraper("dates", url);
-        Scraper showScraper = new Scraper("shows", url);
-        Scraper ratingsScraper = new Scraper("ratings", url);
+        ScrapeWorker dateScraper = new ScrapeWorker("dates", url);
+        ScrapeWorker showScraper = new ScrapeWorker("shows", url);
+        ScrapeWorker ratingsScraper = new ScrapeWorker("ratings", url);
 
         ScrapeResults results = new ScrapeResults();
         results.dates = dateScraper.scrape().dates;
@@ -130,12 +128,14 @@ public final class WWERatingsCsvGrabber {
      */
     private void writeFile() throws InterruptedException, IOException {
 
-        try (FileWriter f = new FileWriter("src/Resources/main_ratings.csv")) {
+        try (FileWriter f = new FileWriter("src/Resources/ratings.csv")) {
             f.write("Date,Event,Relative Rating, Absolute Rating\n");
         }
         catch (IOException e) {
             throw new RuntimeException("Failed to create new file");
         }
+        System.out.println("\rNew file initialized. Scraping...");
+        System.out.println("\rThis may take a few minutes...");
         int pageCount = 69;
         for (int page = pageCount; page > 0; page--) {
 
@@ -146,7 +146,7 @@ public final class WWERatingsCsvGrabber {
 
             FileWriter csv = null;
             try {
-                csv = new FileWriter("src/Resources/main_ratings.csv", true);
+                csv = new FileWriter("src/Resources/ratings.csv", true);
                 for (int i = results.dates.size() - 1; i >= 0; i--) {
                     csv.write(results.resultFormat(i, page));
                 }
@@ -161,7 +161,12 @@ public final class WWERatingsCsvGrabber {
         }
     }
 
+    public static void grabRatings() throws IOException, InterruptedException {
+        main(new String[]{});
+    }
+
     public static void main(String[] args) throws IOException, InterruptedException {
         new WWERatingsCsvGrabber().writeFile();
+        System.out.println("Scraping done");
     }
 }
