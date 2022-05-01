@@ -9,9 +9,24 @@
  * @param volume the amount of shares traded on a given date
  */
 case class StockData(open: Float, high: Float, low: Float, close: Float,
-                     adjClose: Float, volume: Int) {
+                     adjClose: Float, volume: Int) extends Pointable {
 
   override def toString: String = {
     f"$open%2.3f   $high%2.3f   $low%2.3f   $close%2.3f   $adjClose%2.3f   $volume"
   }
+
+  override def toPoint(field: String): Float = {
+    field match {
+      case "open" => this.open
+      case "high" => this.high
+      case "low" => this.low
+      case "close" => this.close
+      case "adjClose" => this.adjClose
+      case "volume" => this.volume.toFloat
+    }
+  }
+
+
+
+
 }

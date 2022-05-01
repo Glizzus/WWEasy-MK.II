@@ -1,5 +1,5 @@
-import scala.annotation.targetName
-import scala.collection.immutable.TreeMap
+import scala.annotation.{tailrec, targetName}
+import scala.collection.immutable.{HashMap, ListSet, TreeMap}
 
 /** Wraps TreeMap to manipulate data defined by Dates.
  *
@@ -29,6 +29,11 @@ case class DateMap(data: TreeMap[Date, Any]) {
     }
   }
 
+  @targetName("remove")
+  def -(key: Date): DateMap = {
+    DateMap(data.removed(key))
+  }
+
   /** Merges two DateMaps together.
    *
    * If a key collision occurs, the parameter Map will take precedence over this Map.
@@ -42,5 +47,14 @@ case class DateMap(data: TreeMap[Date, Any]) {
   def filter(f: Any => Boolean): DateMap = {
     DateMap(data.filter(f))
   }
+
+  def isEmpty: Boolean = {
+    data.isEmpty
+  }
+
+  def toList: List[(Date, Any)] = {
+    data.toList
+  }
+
 
 }

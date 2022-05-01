@@ -20,7 +20,6 @@ object WWEasy extends App {
   @tailrec
   def inputLoop(state: State): Unit = { // TODO: Add more exception handling, make this more Unix-like
 
-    Thread.sleep(1000)
     print("\nWWEasy: ")
     val input = scala.io.StdIn.readLine().split(' ')
     val command = input(0)
@@ -80,6 +79,7 @@ object WWEasy extends App {
                       show match {
                         case "raw" => r.isRaw
                         case "smackdown" => r.isSmackDown
+                        case "nxt" => r.isNxt
                       }
                     case _ => true
                   })
@@ -93,6 +93,10 @@ object WWEasy extends App {
         }
 
       case "clear" =>
+        val dataToClear = input(1)
+        inputLoop(State(state.maps - dataToClear))
+
+      case "clearall" =>
         inputLoop(State())
 
       case "quit" => // This is where the recursion ends (ideally)
@@ -111,7 +115,7 @@ object WWEasy extends App {
             inputLoop(state)
         }
 
-      case "show" =>
+      case "print" =>
         if input(1) == "all" then dataDump(state.maps)
         else {
           val dataToPrint = state.maps.get(input(1))
@@ -127,11 +131,12 @@ object WWEasy extends App {
       case "getcsv" =>
         input(1) match {
           case "-r" | "-ratings" =>
-            new Thread { override def run(): Unit = { WWERatingsCsvGrabber.grabRatings() }}.start()
+            spinOffThread(WWERatingsCsvGrabber.grabRatings())
+            Thread.sleep(1000)
           case "-s" | "-stock" =>
             input.length match {
-              case 2 => grabWweStock()
-              case 6 => grabWweStock(input(2), input(3), input(4), input(5))
+              case 2 => spinOffThread(grabWweStock())
+              case 6 => spinOffThread(grabWweStock(input(2), input(3), input(4), input(5)))
               case _ =>
                 println("Invalid number of arguments entered")
             }
@@ -146,19 +151,8 @@ object WWEasy extends App {
     }
   }
 
-  def printHelp(command: String = "all"): Unit = {
-    command match {
-      case "all" =>
-        println("load [file] [-datatype] [new id]                show [id]")
-        println("filter [-criteria] [id] [-args] [new id]        clear")
-        println("merge [id] [id] [new id]                        help [command]")
-        println("quit")
-    }
-
-  }
-
   private def isValidShow(show: String): Boolean = {
-    val validShows = List("raw", "smackdown")
+    val validShows = List("raw", "smackdown", "nxt")
     validShows.contains(show)
   }
 
@@ -198,5 +192,94 @@ object WWEasy extends App {
 
   def grabWweStock(): Unit = {
     StockDataCsvGrabber.main(Array[String]("WWE"))
+  }
+
+
+  def spinOffThread(block: => Unit): Unit = {
+    new Thread {
+      override def run(): Unit = block
+    }.start()
+  }
+
+
+  @tailrec
+  def printHelp(command: String = "all"): Unit = {
+    command match {
+
+      case "all" =>
+        println("\nProvides an interface for manipulating WWE related data into dataframes")
+        println("load [file] [-datatype] [new id]                print [id]")
+        println("filter [-criteria] [id] [args] [new id]         getcsv [-datatype] [args]")
+        println("merge [id] [id] [new id]                        help [command]")
+        println("quit                                            clear [id]")
+        println("clearall")
+
+      case "load" =>
+        println("\nLoads a .csv file into the program to manipulate\n")
+
+        println("USAGE: load [file] [-datatypes] [new id]")
+        println("Currently valid datatypes include Pay-Per-View (-p), Stock (-s), Ratings (-r)")
+        println("EXAMPLE: load some_data.csv -p MyPPVData")
+
+      case "print" =>
+        println("\nPrints out a dataframe by its id\n")
+
+        println("USAGE: print [id]")
+
+      case "filter" =>
+        println("\nFilters a dataframe by one of its attributes\n")
+
+        println("USAGE: filter [-criteria] [id] [args] [new id]")
+        println("Currently valid criteria include Date (-d), Show (-s)\n")
+
+        println("For filtering by Date, valid arguments include a [relational operator] (<, =, >) followed by a " +
+          "[date] in yyyy-mm-dd format")
+        println("EXAMPLE: filter -d MyStockData < 2015-01-01 MyFilteredData\n")
+
+        println("For filtering by Show, valid arguments include \"raw, \"smackdown, \"nxt")
+        println("EXAMPLE: filter -s MyShowsData raw MyRawData")
+
+      case "getcsv" =>
+        println("\nGets a .csv file from the internet\n")
+
+        println("USAGE: getcsv [-datatype] [args]")
+        println("Valid datatypes include Ratings (-r) and Stock (-s)\n")
+
+        println("To get a Ratings .csv, pass in no arguments")
+        println("EXAMPLE: getcsv -r\n")
+
+        println("To get a Stock .csv, you can pass in nothing, or pass in arguments here.\n" +
+          "Arguments include [start_date] and [end_date] (yyyy-mm-dd), an [interval] " +
+          "(daily, weekly, monthly), and a [directory].")
+        println("EXAMPLE 1: getcsv -s")
+        println("EXAMPLE 2: getcsv -s 2001-01-01 2005-01-01 weekly myDir/Resources")
+
+      case "merge" =>
+        println("\nMerges two dataframes into a single dataframe")
+        println("\nBecause two entries can not share the same date, the second dataframe will take precedence\n")
+
+        println("USAGE: merge [id] [id] [new id]")
+        println("EXAMPLE: merge MyData1 myData2 MyMergedData")
+
+      case "help" =>
+        println("\nDisplays information about a command\n")
+        println("USAGE: help [command]")
+        println("EXAMPLE: help load")
+
+      case "quit" =>
+        println("\nExits the program. No dataframes are saved\n")
+        println("USAGE: quit")
+
+      case "clear" =>
+        println("\nRemoves a dataframe.\n")
+        println("USAGE: clear [id]")
+        println("EXAMPLE: clear DataIDontNeed")
+
+      case "clearall" =>
+        println("\nRemoves all dataframes.\n")
+        println("USAGE: clearall")
+
+      case _ => printHelp()
+    }
   }
 }

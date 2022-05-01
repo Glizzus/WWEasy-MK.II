@@ -7,6 +7,8 @@ import scala.collection.immutable.TreeMap
  */
 case object DataProcessor {
 
+  val validTypes: Seq[String] = List("-p", "-ppv", "-s", "-stock", "-r", "-ratings")
+
 
   /** A method that converts a csv of valid data types into a DateMap.
    *
@@ -51,7 +53,6 @@ case object DataProcessor {
 
 
   def isValidType(dataType: String): Boolean = {
-    val validTypes = List("-p", "-ppv", "-s", "-stock", "-r", "-ratings")
     validTypes.contains(dataType.toLowerCase)
   }
 

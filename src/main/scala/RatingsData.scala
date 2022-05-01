@@ -4,7 +4,7 @@
  * @param title the title of the show
  * @param absRating the absolute rating (estimated number of viewers) of the show
  */
-case class RatingsData(title: String, relRating: Float, absRating: Int) {
+case class RatingsData(title: String, relRating: Float, absRating: Int) extends Pointable {
 
   override def toString: String = {
     f"$title%-60s" +
@@ -15,6 +15,13 @@ case class RatingsData(title: String, relRating: Float, absRating: Int) {
   val isRaw: Boolean = title.contains("RAW")
   val isSmackDown: Boolean = title.contains("SmackDown")
   val isNxt: Boolean = title.contains("NXT")
+
+  override def toPoint(field: String): Float = {
+    field match {
+      case "relativeRating" => this.relRating
+      case "absoluteRating" => this.absRating
+    }
+  }
 
 }
 

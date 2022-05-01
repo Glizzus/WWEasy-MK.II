@@ -1,17 +1,16 @@
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Scanner;
 import java.io.FileOutputStream;
 import java.io.IOException;
-
 import java.net.URL;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import java.text.ParseException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.TimeZone;
+import java.time.DateTimeException;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.util.Scanner;
 
 /**
  * A class for fetching Yahoo! Finance .csv files.
@@ -31,18 +30,17 @@ public class StockDataCsvGrabber {
      * @param dateIn the input date in format yyyy-MM-dd
      * @return A long that represents the given date in Unix time
      */
-    private static long dateToUnixTime(String dateIn) throws ParseException {
-        DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-        df.setTimeZone(TimeZone.getTimeZone("UTC"));
-        return df.parse(dateIn)
-                .getTime()
-                / 1000L; // converts milliseconds to seconds
+    private static long dateToUnixTime(String dateIn) throws DateTimeException {
+        return LocalDate
+                .parse(dateIn)
+                .atStartOfDay()
+                .toEpochSecond(ZoneOffset.UTC);
     }
 
     private static Boolean isValidIncrement(String increment) {
-        String[] validIntervals = new String[]{"daily", "weekly", "monthly"};
-        for (String type : validIntervals) {
-            if (type.equals(increment)) return true;
+        String[] validIntervals = {"daily", "weekly", "monthly"};
+        for (String interval : validIntervals) {
+            if (interval.equals(increment)) return true;
         }
         return false;
     }
@@ -82,11 +80,12 @@ public class StockDataCsvGrabber {
      * @return a String that is the filename of the finished file
      */
     private static String makeFileName(String path, String ticker, String start, String end, String increment) {
-        if (!path.endsWith("/")) {
-            path += "/"; // Done for Unix-based directories
+        String os = System.getProperty("os.name").toLowerCase();
+        if (os.contains("win") && !path.endsWith("\\")) {
+            path += "\\";
         }
-        else if (!path.endsWith("\\")) {
-            path += "\\"; // Done for Windows directories
+        else if (!path.endsWith("/")) {
+            path += "/";
         }
         return path + ticker + "_" + start + "to" + end + "_" + increment;
     }
@@ -114,7 +113,8 @@ public class StockDataCsvGrabber {
      */
     private static String[] getInputs() {
         System.out.print("Stock: ");
-        return getInputs(new Scanner(System.in).nextLine());
+        String stock = new Scanner(System.in).nextLine();
+        return getInputs(stock);
     }
 
     /**
@@ -124,36 +124,38 @@ public class StockDataCsvGrabber {
      * @return a String[] that functions as the parameter for main()
      */
     private static String[] getInputs(String stock) {
-        String[] inputs = new String[5];
         Scanner scan = new Scanner(System.in);
-        inputs[0] = stock;
+
+        String start;
+        String end;
         do {
             System.out.print("Start date: ");
-            inputs[1] = scan.nextLine();
+            start = scan.nextLine();
             System.out.print("End date: ");
-            inputs[2] = scan.nextLine();
-            if (inputs[2].compareTo(inputs[1]) < 0) System.out.println("End date must come after Start date.");
+            end = scan.nextLine();
+            if (end.compareTo(start) < 0) System.out.println("End date must come after Start date.");
         }
-        while (inputs[2].compareTo(inputs[1]) < 0);
+        while (end.compareTo(start) < 0);
 
+        String interval;
         do {
             System.out.print("Interval: ");
-            inputs[3] = scan.nextLine();
-            if (!isValidIncrement(inputs[3])) System.out.println("Invalid increment, options include\n" +
-                                                                    "[daily], [weekly], [monthly]");
+            interval = scan.nextLine();
+            if (!isValidIncrement(interval)) System.out.println("Invalid increment, options include\n" +
+                    "[daily], [weekly], [monthly]");
         }
-        while (!isValidIncrement(inputs[3]));
+        while (!isValidIncrement(interval));
 
-        Path toCheck;
+        String directory;
         do {
             System.out.print("Directory to download to: ");
-            inputs[4] = scan.nextLine();
-            toCheck = Path.of(inputs[4]);
-            if (!Files.isDirectory(toCheck)) System.out.println("Directory does not exist.");
+            directory = scan.nextLine();
+            if (!Files.isDirectory(Path.of(directory))) System.out.println("Directory does not exist.");
         }
-        while (!Files.isDirectory(toCheck));
-        return inputs;
+        while (!Files.isDirectory(Path.of(directory)));
+        return new String[]{stock, start, end, interval, directory};
     }
+
 
     private static void getStockDataCsv(String[] args) throws IOException, ParseException {
         if (args.length != 5) throw new IllegalArgumentException();
@@ -161,11 +163,11 @@ public class StockDataCsvGrabber {
         String start = args[1];
         String end = args[2];
         if (end.compareTo(start) < 0) throw new IllegalArgumentException("Error: end date must be after start date");
-        String increment;
-        if (isValidIncrement(args[3])) {
-            increment = args[3];
-        }
-        else throw new IllegalArgumentException("Error: Invalid Increment");
+
+        String increment = args[3];
+        if (!isValidIncrement(increment)) throw new IllegalArgumentException("Invalid increment, options include\n" +
+                "[daily], [weekly], [monthly]");
+
         String path = args[4];
         if (!Files.isDirectory(Path.of(path))) throw new IllegalArgumentException("Error: Directory does not exists");
 
@@ -178,11 +180,15 @@ public class StockDataCsvGrabber {
     }
 
     public static void main(String[] args) throws ParseException, IOException {
-        if (args.length == 0) getStockDataCsv(getInputs()); // get all input from user
-        if (args.length == 1) getStockDataCsv(getInputs(args[0])); // get all input except for the Stock
-        else if (args.length != 5) throw new IllegalArgumentException();
-        else {
-            getStockDataCsv(args); // get all input from command line arguments
+
+        switch (args.length) {
+            case 0 -> getStockDataCsv(getInputs());
+            case 1 -> {
+                String stock = args[0];
+                getStockDataCsv(getInputs(stock));
+            }
+            case 5 -> getStockDataCsv(args);
+            default -> throw new IllegalArgumentException();
         }
     }
 }
