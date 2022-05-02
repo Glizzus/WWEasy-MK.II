@@ -1,4 +1,5 @@
 import scala.annotation.tailrec
+import scala.util.{Try, Success, Failure}
 
 /** The front-facing application for the client.
  *
@@ -20,135 +21,138 @@ object WWEasy extends App {
   @tailrec
   def inputLoop(state: State): Unit = { // TODO: Add more exception handling, make this more Unix-like
 
-    print("\nWWEasy: ")
-    val input = scala.io.StdIn.readLine().split(' ')
-    val command = input(0)
+      print("\nWWEasy: ")
+      val input = scala.io.StdIn.readLine().split(' ')
+      val command = input(0)
 
-    command match {
+      command match {
 
-      case "help" =>
-        if (isOneCommand(input)) printHelp()
-        else printHelp(input(1))
-        inputLoop(state)
+        case "help" =>
+          if (isOneCommand(input)) printHelp()
+          else printHelp(input(1))
+          inputLoop(state)
 
-      case "load" =>
+        case "load" =>
 
-        load(input(1), input(2))
-        val newName = input(3)
-        val map = load(input(1), input(2))
-        println(s".csv successfully loaded into $newName") // This tells the user the ID of the DateMap
-        inputLoop(State(state.maps + (newName -> map)))
 
-      case "filter" =>
+          load(input(1), input(2))
+          val newName = input(3)
+          val map = load(input(1), input(2))
+          println(s".csv successfully loaded into $newName") // This tells the user the ID of the DateMap
+          inputLoop(State(state.maps + (newName -> map)))
 
-        val whatToFilterBy = input(1)
-        val dataToFilter = input(2)
 
-        whatToFilterBy match {
+        case "filter" =>
 
-          case "-d" | "-date" =>
-            val toFilter = state.maps.get(dataToFilter)
-            toFilter match {
-              case Some(map) =>
-                val operator = input(3)
-                val date = input(4)
-                val newName = input(5)
-                val filtered = map.filterByDate(date, operator)
-                println(s"Filter successfully applied; data loaded into $newName")
-                inputLoop(State(state.maps + (newName -> filtered)))
-              case None =>
-                println("Queried data does not exist: please try again")
-                inputLoop(state)
-            }
+          val whatToFilterBy = input(1)
+          val dataToFilter = input(2)
 
-          case "-s" | "-show" =>
-            val show = input(3)
+          whatToFilterBy match {
 
-            if (!isValidShow(show)) {
-              println("Invalid show")
-              inputLoop(state)
-            }
-            else {
+            case "-d" | "-date" =>
               val toFilter = state.maps.get(dataToFilter)
               toFilter match {
                 case Some(map) =>
-
-                  val newName = input(4)
-                  val filtered = map.filter({
-                    case (_, r: RatingsData) =>
-                      show match {
-                        case "raw" => r.isRaw
-                        case "smackdown" => r.isSmackDown
-                        case "nxt" => r.isNxt
-                      }
-                    case _ => true
-                  })
+                  val operator = input(3)
+                  val date = input(4)
+                  val newName = input(5)
+                  val filtered = map.filterByDate(date, operator)
                   println(s"Filter successfully applied; data loaded into $newName")
                   inputLoop(State(state.maps + (newName -> filtered)))
                 case None =>
                   println("Queried data does not exist: please try again")
                   inputLoop(state)
               }
-            }
-        }
 
-      case "clear" =>
-        val dataToClear = input(1)
-        inputLoop(State(state.maps - dataToClear))
+            case "-s" | "-show" =>
+              val show = input(3)
 
-      case "clearall" =>
-        inputLoop(State())
+              if (!isValidShow(show)) {
+                println("Invalid show")
+                inputLoop(state)
+              }
+              else {
+                val toFilter = state.maps.get(dataToFilter)
+                toFilter match {
+                  case Some(map) =>
 
-      case "quit" => // This is where the recursion ends (ideally)
-        println("Goodbye")
-        sys.exit(0)
-
-      case "merge" =>
-        val merged = tryMerge(input(1), input(2), state)
-        merged match {
-          case Some(map) =>
-            val newName = input(3)
-            println(s"Maps successfully merged into $newName")
-            inputLoop(State(state.maps + (newName -> map)))
-          case None =>
-                println(s"Queried Data does not exist")
-            inputLoop(state)
-        }
-
-      case "print" =>
-        if input(1) == "all" then dataDump(state.maps)
-        else {
-          val dataToPrint = state.maps.get(input(1))
-          dataToPrint match {
-            case Some(data) =>
-              println(s"\n[${input(1)}]:\n$data")
-            case None =>
-              println("Queried data not present")
+                    val newName = input(4)
+                    val filtered = map.filter({
+                      case (_, r: RatingsData) =>
+                        show match {
+                          case "raw" => r.isRaw
+                          case "smackdown" => r.isSmackDown
+                          case "nxt" => r.isNxt
+                        }
+                      case _ => true
+                    })
+                    println(s"Filter successfully applied; data loaded into $newName")
+                    inputLoop(State(state.maps + (newName -> filtered)))
+                  case None =>
+                    println("Queried data does not exist: please try again")
+                    inputLoop(state)
+                }
+              }
           }
-        }
-        inputLoop(state)
 
-      case "getcsv" =>
-        input(1) match {
-          case "-r" | "-ratings" =>
-            spinOffThread(WWERatingsCsvGrabber.grabRatings())
-            Thread.sleep(1000)
-          case "-s" | "-stock" =>
-            input.length match {
-              case 2 => spinOffThread(grabWweStock())
-              case 6 => spinOffThread(grabWweStock(input(2), input(3), input(4), input(5)))
-              case _ =>
-                println("Invalid number of arguments entered")
+        case "clear" =>
+          val dataToClear = input(1)
+          inputLoop(State(state.maps - dataToClear))
+
+        case "clearall" =>
+          inputLoop(State())
+
+        case "quit" => // This is where the recursion ends (ideally)
+          println("Goodbye")
+          sys.exit(0)
+
+        case "merge" =>
+          val merged = tryMerge(input(1), input(2), state)
+          merged match {
+            case Some(map) =>
+              val newName = input(3)
+              println(s"Maps successfully merged into $newName")
+              inputLoop(State(state.maps + (newName -> map)))
+            case None =>
+              println(s"Queried Data does not exist")
+              inputLoop(state)
+          }
+
+        case "print" =>
+          if input(1) == "all" then dataDump(state.maps)
+          else {
+            val dataToPrint = state.maps.get(input(1))
+            dataToPrint match {
+              case Some(data) =>
+                println(s"\n[${input(1)}]:\n$data")
+              case None =>
+                println("Queried data not present")
             }
-          case _ =>
-            println("Invalid data type entered")
-        }
-        inputLoop(state)
+          }
+          inputLoop(state)
 
-      case _ =>
-        println("Invalid input: please try again")
-        inputLoop(state)
-    }
+        case "getcsv" =>
+          input(1) match {
+            case "-r" | "-ratings" =>
+              spinOffThread(WWERatingsCsvGrabber.grabRatings())
+              Thread.sleep(1000)
+            case "-s" | "-stock" =>
+              input.length match {
+                case 2 => spinOffThread(grabWweStock())
+                case 6 => spinOffThread(grabWweStock(input(2), input(3), input(4), input(5)))
+                case _ =>
+                  println("Invalid number of arguments entered")
+              }
+            case _ =>
+              println("Invalid data type entered")
+          }
+          inputLoop(state)
+
+        case _ =>
+          println("Invalid input: please try again")
+          inputLoop(state)
+      }
+
   }
 
   private def isValidShow(show: String): Boolean = {
@@ -235,6 +239,10 @@ object WWEasy extends App {
         println("For filtering by Date, valid arguments include a [relational operator] (<, =, >) followed by a " +
           "[date] in yyyy-mm-dd format")
         println("EXAMPLE: filter -d MyStockData < 2015-01-01 MyFilteredData\n")
+        println("Also, you can use wildcards \"_\" in order to only filter by year, month, or date")
+        println("EXAMPLE 1: filter -d MyStockData < ____-05-__ DataBeforeMay")
+        println("EXAMPLE 2: filter -d MyStockData < ____-__-01 NewYearsData\n")
+
 
         println("For filtering by Show, valid arguments include \"raw, \"smackdown, \"nxt")
         println("EXAMPLE: filter -s MyShowsData raw MyRawData")
