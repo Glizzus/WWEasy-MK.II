@@ -1,5 +1,6 @@
+import java.io.File
 import scala.annotation.tailrec
-import scala.util.{Try, Success, Failure}
+import scala.util.{Failure, Success, Try}
 
 /** The front-facing application for the client.
  *
@@ -95,6 +96,16 @@ object WWEasy extends App {
               }
           }
 
+        case "filedump" =>
+          fileDump("src/Resources")
+          inputLoop(state)
+
+        case "renamefile" =>
+          val result = renameFile(input(1), input(2))
+          if result then println(s"${input(1)} successfully renamed to ${input(2)}")
+          else println("Rename failed")
+          inputLoop(state)
+
         case "clear" =>
           val dataToClear = input(1)
           inputLoop(State(state.maps - dataToClear))
@@ -134,12 +145,12 @@ object WWEasy extends App {
         case "getcsv" =>
           input(1) match {
             case "-r" | "-ratings" =>
-              spinOffThread(WWERatingsCsvGrabber.grabRatings())
+              Utils.spinOffThread(WWERatingsCsvGrabber.grabRatings())
               Thread.sleep(1000)
             case "-s" | "-stock" =>
               input.length match {
-                case 2 => spinOffThread(grabWweStock())
-                case 6 => spinOffThread(grabWweStock(input(2), input(3), input(4), input(5)))
+                case 2 => grabWweStock()
+                case 6 => Utils.spinOffThread(grabWweStock(input(2), input(3), input(4), input(5)))
                 case _ =>
                   println("Invalid number of arguments entered")
               }
@@ -198,11 +209,12 @@ object WWEasy extends App {
     StockDataCsvGrabber.main(Array[String]("WWE"))
   }
 
+  def fileDump(file: String): Unit = {
+    new File(file).list().foreach(println)
+  }
 
-  def spinOffThread(block: => Unit): Unit = {
-    new Thread {
-      override def run(): Unit = block
-    }.start()
+  def renameFile(old: String, newName: String) : Boolean  = {
+    new File(old).renameTo(new File(newName))
   }
 
 

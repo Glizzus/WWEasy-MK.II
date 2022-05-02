@@ -175,7 +175,14 @@ public class StockDataCsvGrabber {
         long unixEnd = dateToUnixTime(end);
         String url = buildYahooUrl(ticker, unixStart, unixEnd, increment);
         String fullPath = makeFileName(path, ticker, start, end, increment);
-        getFileFromUrl(url, fullPath);
+        new Thread(() -> {
+            try {
+                getFileFromUrl(url, fullPath);
+            }
+            catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }).start();
         System.out.printf("File loaded into %s%n", fullPath);
     }
 

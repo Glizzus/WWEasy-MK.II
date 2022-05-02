@@ -38,22 +38,7 @@ case class DateMap(data: TreeMap[LocalDate, Any]) {
      */
     def getFieldsToFilterBy(strDate: String): List[String] = {
 
-
-      /** Checks to see if the date has Wildcards in its string representation
-       *
-       * @param strDate the date as a String that might contain Wildcards
-       * @return A tuple representing an input combination to be used in a truth table
-       */
-      def parseDateWildCards(strDate: String): (Boolean, Boolean, Boolean) = {
-        val fields = strDate.split("-")
-        val year = fields(0)
-        val month = fields(1)
-        val day = fields(2)
-        (year != "____", month != "__", day != "__")
-      }
-
-      val wildCards = parseDateWildCards(strDate)
-
+      val wildCards = isEachFieldConcrete(strDate)
       wildCards match {
 
         // The entire date is a wildcard
@@ -77,10 +62,26 @@ case class DateMap(data: TreeMap[LocalDate, Any]) {
         // Filter the dates based on the year and month
         case (true, true, false) => List("year, month")
 
-        // Filter the dates compared to an entire date
-        case (true, true, true) => List("year", "month", "day")
+        /* This is going to be the most common option, so we optimize this case by only requiring one filter */
+        case (true, true, true) => List("all")
 
       }
+    }
+
+
+    /** Checks to see if the date has Wildcards in its string representation
+     *
+     * @param strDate the date as a String that might contain Wildcards
+     * @return A tuple representing an input combination to be used in a truth table
+     */
+    def isEachFieldConcrete(strDate: String): (Boolean, Boolean, Boolean) = {
+      val fields = strDate.split("-")
+      val year = fields(0)
+      val month = fields(1)
+      val day = fields(2)
+      val isUnderscores = (str: String) => str.forall(c => c == '_')
+
+      (isUnderscores(year), isUnderscores(month), isUnderscores(day))
     }
 
     val fields = getFieldsToFilterBy(strDate)
@@ -119,32 +120,32 @@ case class DateMap(data: TreeMap[LocalDate, Any]) {
      */
     def compareDatesWithOperators(operator: String, date1: LocalDate, date2: LocalDate, field: String): Boolean = {
 
-      /** Matches the field to determine how the dates are compared.
-       *
-       * @param date1 the first date to compare
-       * @param date2 the second date to compare
-       * @param field the field to compare the dates by
-       * @return an Int representing the value of the comparison from date1 and date2
-       */
-      def getDateComparison(date1: LocalDate, date2: LocalDate, field: String): Int = {
-        field match {
-          case "all" =>
-            date1.compareTo(date2)
-          case "year" =>
-            date1.getYear.compareTo(date2.getYear)
-          case "month" =>
-            date1.getMonthValue.compareTo(date2.getMonthValue)
-          case "day" =>
-            date1.getDayOfMonth.compareTo(date2.getDayOfMonth)
-        }
-      }
-
       val comp = getDateComparison(date1, date2, field)
       operator match {
         case "<" => comp < 0
         case ">" => comp > 0
         case "=" => comp == 0
         case _ => throw new IllegalArgumentException()
+      }
+    }
+
+    /** Matches the field to determine how the dates are compared.
+     *
+     * @param date1 the first date to compare
+     * @param date2 the second date to compare
+     * @param field the field to compare the dates by
+     * @return an Int representing the value of the comparison from date1 and date2
+     */
+    def getDateComparison(date1: LocalDate, date2: LocalDate, field: String): Int = {
+      field match {
+        case "all" =>
+          date1.compareTo(date2)
+        case "year" =>
+          date1.getYear.compareTo(date2.getYear)
+        case "month" =>
+          date1.getMonthValue.compareTo(date2.getMonthValue)
+        case "day" =>
+          date1.getDayOfMonth.compareTo(date2.getDayOfMonth)
       }
     }
     recursiveFilterer(fields, this, dateToFilterBy, operator)
@@ -173,6 +174,4 @@ case class DateMap(data: TreeMap[LocalDate, Any]) {
   def isEmpty: Boolean = {
     data.isEmpty
   }
-
-
 }
