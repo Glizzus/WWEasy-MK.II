@@ -1,9 +1,10 @@
 object Utils {
   
   def spinOffThread(block: => Unit): Unit = {
-    new Thread {
+    val t = new Thread {
       override def run(): Unit = block
-    }.start()
+    }
+    t.start()
   }
   
   

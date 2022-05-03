@@ -62,7 +62,7 @@ case class DateMap(data: TreeMap[LocalDate, Any]) {
         // Filter the dates based on the year and month
         case (true, true, false) => List("year, month")
 
-        /* This is going to be the most common option, so we optimize this case by only requiring one filter */
+        // This is going to be the most common option, so we optimize this case by only requiring one filter
         case (true, true, true) => List("all")
 
       }
@@ -81,7 +81,7 @@ case class DateMap(data: TreeMap[LocalDate, Any]) {
       val day = fields(2)
       val isUnderscores = (str: String) => str.forall(c => c == '_')
 
-      (isUnderscores(year), isUnderscores(month), isUnderscores(day))
+      (!isUnderscores(year), !isUnderscores(month), !isUnderscores(day))
     }
 
     val fields = getFieldsToFilterBy(strDate)
