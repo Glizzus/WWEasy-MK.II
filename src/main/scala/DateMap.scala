@@ -170,7 +170,7 @@ case class DateMap(data: TreeMap[LocalDate, Any]) {
   def filter(f: ((LocalDate, Any)) => Boolean): DateMap = {
     DateMap(data.filter(f))
   }
-
+  
   def isEmpty: Boolean = {
     data.isEmpty
   }

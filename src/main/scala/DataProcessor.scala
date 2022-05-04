@@ -20,7 +20,7 @@ case object DataProcessor {
    */
   def csvToDateMap(fileName: String, dataType: String): DateMap = {
     if (!isValidType(dataType)) throw new IllegalArgumentException("Invalid type of data requested")
-    if (!isValidFile(fileName)) throw new IllegalArgumentException("File is not .csv file")
+    if (!isValidFile(fileName)) throw new IllegalArgumentException("File does not exist or is invalid")
     val buffered = scala.io.Source.fromFile(fileName)
     val lines = buffered.getLines()
 
@@ -49,7 +49,7 @@ case object DataProcessor {
 
   def isValidFile(fileName: String): Boolean = {
     fileName.length() > 4 && fileName.takeRight(4) == ".csv" &&
-      java.io.File(fileName).exists()
+    java.io.File(fileName).exists()
   }
 
 

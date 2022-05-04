@@ -8,9 +8,25 @@ import scala.util.{Failure, Success, Try}
  */
 object WWEasy extends App {
 
-  greet()
-  inputLoop(State())
+  println("Welcome to WWEasy")
+  mainLoop(State())
 
+
+
+  /** A tail-recursive loop that serves the application to the client.
+   *
+   * @param state the current state of the program
+   */
+  @tailrec
+  def mainLoop(state: State): Unit = {
+    val newState = inputMatcher(state, getInput)
+    mainLoop(newState)
+  }
+
+  def getInput: String = {
+    print("\nWWEasy: ")
+    scala.io.StdIn.readLine()
+  }
 
   /** A tail-recursive loop that serves the application to the client.
    *
@@ -19,29 +35,26 @@ object WWEasy extends App {
    *
    * @param state the current state of the program. This includes all of the DateMaps that the user has manipulated.
    */
-  @tailrec
-  def inputLoop(state: State): Unit = { // TODO: Add more exception handling, make this more Unix-like
+  def inputMatcher(state: State, line: String): State = {
 
-      print("\nWWEasy: ")
-      val input = scala.io.StdIn.readLine().split(' ')
+    try {
+      val input = line.split(' ')
       val command = input(0)
 
       command match {
 
         case "help" =>
-          if (isOneCommand(input)) printHelp()
+          if input.length == 1 then printHelp()
           else printHelp(input(1))
-          inputLoop(state)
+          state
 
         case "load" =>
-
 
           load(input(1), input(2))
           val newName = input(3)
           val map = load(input(1), input(2))
           println(s".csv successfully loaded into $newName") // This tells the user the ID of the DateMap
-          inputLoop(State(state.maps + (newName -> map)))
-
+          State(state.maps + (newName -> map))
 
         case "filter" =>
 
@@ -59,10 +72,10 @@ object WWEasy extends App {
                   val newName = input(5)
                   val filtered = map.filterByDate(date, operator)
                   println(s"Filter successfully applied; data loaded into $newName")
-                  inputLoop(State(state.maps + (newName -> filtered)))
+                  State(state.maps + (newName -> filtered))
                 case None =>
                   println("Queried data does not exist: please try again")
-                  inputLoop(state)
+                  state
               }
 
             case "-s" | "-show" =>
@@ -70,48 +83,39 @@ object WWEasy extends App {
 
               if (!isValidShow(show)) {
                 println("Invalid show")
-                inputLoop(state)
+                state
               }
               else {
                 val toFilter = state.maps.get(dataToFilter)
                 toFilter match {
                   case Some(map) =>
-
                     val newName = input(4)
-                    val filtered = map.filter({
-                      case (_, r: RatingsData) =>
-                        show match {
-                          case "raw" => r.isRaw
-                          case "smackdown" => r.isSmackDown
-                          case "nxt" => r.isNxt
-                        }
-                      case _ => true
-                    })
+                    val filtered = map.filter((_, data) => filterByShow(data, show))
                     println(s"Filter successfully applied; data loaded into $newName")
-                    inputLoop(State(state.maps + (newName -> filtered)))
+                    State(state.maps + (newName -> filtered))
                   case None =>
                     println("Queried data does not exist: please try again")
-                    inputLoop(state)
+                    state
                 }
               }
           }
 
         case "filedump" =>
           fileDump("src/Resources")
-          inputLoop(state)
+          state
 
         case "renamefile" =>
           val result = renameFile(input(1), input(2))
           if result then println(s"${input(1)} successfully renamed to ${input(2)}")
           else println("Rename failed")
-          inputLoop(state)
+          state
 
         case "clear" =>
           val dataToClear = input(1)
-          inputLoop(State(state.maps - dataToClear))
+          State(state.maps - dataToClear)
 
         case "clearall" =>
-          inputLoop(State())
+          State()
 
         case "quit" => // This is where the recursion ends (ideally)
           println("Goodbye")
@@ -123,10 +127,10 @@ object WWEasy extends App {
             case Some(map) =>
               val newName = input(3)
               println(s"Maps successfully merged into $newName")
-              inputLoop(State(state.maps + (newName -> map)))
+              State(state.maps + (newName -> map))
             case None =>
               println(s"Queried Data does not exist")
-              inputLoop(state)
+              state
           }
 
         case "print" =>
@@ -140,30 +144,45 @@ object WWEasy extends App {
                 println("Queried data not present")
             }
           }
-          inputLoop(state)
+          state
 
         case "getcsv" =>
           input(1) match {
             case "-r" | "-ratings" =>
               Utils.spinOffThread(WWERatingsCsvGrabber.grabRatings())
-              Thread.sleep(1000)
             case "-s" | "-stock" =>
               input.length match {
                 case 2 => grabWweStock()
-                case 6 => Utils.spinOffThread(grabWweStock(input(2), input(3), input(4), input(5)))
+                case 6 => grabWweStock(input(2), input(3), input(4), input(5))
                 case _ =>
                   println("Invalid number of arguments entered")
               }
             case _ =>
               println("Invalid data type entered")
           }
-          inputLoop(state)
+          state
 
         case _ =>
           println("Invalid input: please try again")
-          inputLoop(state)
+          state
       }
+    }
+    catch {
+      case exception: Exception =>
+        exception match {
+          case _: ArrayIndexOutOfBoundsException =>
+            println("Invalid number of arguments entered; refer to [help] to see proper usage of commands")
+          case exception: Exception => println("Error: " + exception)
+        }
+        state
+    }
+  }
 
+
+
+
+  private def load(file: String, dataType: String): DateMap = {
+    DataProcessor.csvToDateMap(file, dataType)
   }
 
   private def isValidShow(show: String): Boolean = {
@@ -171,18 +190,18 @@ object WWEasy extends App {
     validShows.contains(show)
   }
 
-  /** This prints out each entry of a map along with its key.
-   *
-   * @param map any Map
-   */
-  private def dataDump(map: Map[String, Any]): Unit = {
-    map.foreach((key, value) => println(s"\n[$key]:\n$value"))
-  }
+  def filterByShow(data: Any, show: String): Boolean = {
+    data match {
+      case r: RatingsData =>
+        show match {
+          case "raw" => r.isRaw
+          case "smackdown" => r.isSmackDown
+          case "nxt" => r.isNxt
+          case _ => throw new IllegalArgumentException()
+        }
+      case _ => true
 
-  private def greet(): Unit = println("Welcome to WWEasy")
-
-  def load(file: String, dataType: String): DateMap = {
-    DataProcessor.csvToDateMap(file, dataType)
+    }
   }
 
   def tryMerge(mapStr1: String, mapStr2: String, state: State): Option[DateMap] = {
@@ -199,27 +218,31 @@ object WWEasy extends App {
     }
   }
 
-  def isOneCommand(strings: Array[String]): Boolean = strings.length == 1
+  /** This prints out each entry of a map along with its key.
+   *
+   * @param map any Map
+   */
+  private def dataDump(map: Map[String, Any]): Unit = {
+    map.foreach((key, value) => println(s"\n[$key]:\n$value"))
+  }
 
-  def grabWweStock(start: String, end: String, interval: String, directory: String): Unit = {
+  private def fileDump(file: String): Unit = new File(file).list().foreach(println)
+
+  private def renameFile(old: String, newName: String): Boolean = new File(old).renameTo(new File(newName))
+
+  private def grabWweStock(start: String, end: String, interval: String, directory: String): Unit = {
     StockDataCsvGrabber.main(Array[String]("WWE", start, end, interval, directory))
   }
 
-  def grabWweStock(): Unit = {
-    StockDataCsvGrabber.main(Array[String]("WWE"))
-  }
+  private def grabWweStock(): Unit = StockDataCsvGrabber.main(Array[String]("WWE"))
 
-  def fileDump(file: String): Unit = {
-    new File(file).list().foreach(println)
-  }
 
-  def renameFile(old: String, newName: String) : Boolean  = {
-    new File(old).renameTo(new File(newName))
-  }
+
+
 
 
   @tailrec
-  def printHelp(command: String = "all"): Unit = {
+  private def printHelp(command: String = "all"): Unit = {
     command match {
 
       case "all" =>
@@ -228,7 +251,8 @@ object WWEasy extends App {
         println("filter [-criteria] [id] [args] [new id]         getcsv [-datatype] [args]")
         println("merge [id] [id] [new id]                        help [command]")
         println("quit                                            clear [id]")
-        println("clearall")
+        println("clearall                                        filedump")
+        println("renamefile")
 
       case "load" =>
         println("\nLoads a .csv file into the program to manipulate\n")
@@ -298,6 +322,9 @@ object WWEasy extends App {
       case "clearall" =>
         println("\nRemoves all dataframes.\n")
         println("USAGE: clearall")
+
+      case "filedump" =>
+        println("\nShows each file in the Resources file ")
 
       case _ => printHelp()
     }

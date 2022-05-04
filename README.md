@@ -10,6 +10,6 @@ This project will be done in mostly in Scala, except for the web scraping which 
 This will first be a simple CLI application, ~~but will later be made a desktop application using JavaFX.~~
 
 JavaFX requires too many dependencies that I don't wish to inflict on the user; 
-this will instead be made a web application using the Play framework
+this will instead be made a web application ~~using the Play framework~~ that I will roll on my own.
 
 Thanks to Alvin Alexander for the books and the resources that made this project possible.
