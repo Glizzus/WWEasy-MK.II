@@ -5,14 +5,12 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-
-
+import java.util.ArrayList;
+import java.util.List;
 
 public class Server {
 
-    static String httpOK = "HTTP/1.1 200 OK\r\n\r\n";
+    static String httpOK = "HTTP/1.1 \r\n" + "200 OK";
 
     public static void main(String[] args) throws IOException {
 
@@ -30,24 +28,44 @@ public class Server {
 
         StringBuilder requestBuilder = new StringBuilder();
         String line;
+        List<String> lines = new ArrayList<>();
         while (!(line = buffRead.readLine()).isBlank()) {
-            System.out.println(line);
+            lines.add(line);
         }
+        lines.forEach(System.out::println);
+        lines.forEach(x -> {
+            if (isPost(x)) System.out.println(getRoute(x));
+        });
         sendHTML(client);
 
+    }
 
+    private static boolean isPost(String line) {
+        return line.startsWith("POST");
+    }
+
+    private static boolean isGet(String line) {
+        return line.startsWith("GET");
+    }
+
+    private static String getRoute(String line) {
+        return line.split("/")[1].split(" ")[0];
     }
 
     private static void sendHTML(Socket client) throws IOException {
         OutputStream clientOutput = client.getOutputStream();
-        clientOutput.write(("HTTP/1.1 \r\n" + "200 OK").getBytes(StandardCharsets.UTF_8));
+        clientOutput.write(httpOK.getBytes(StandardCharsets.UTF_8));
         clientOutput.write(("ContentType: " + "text/html" + "\r\n").getBytes(StandardCharsets.UTF_8));
         clientOutput.write("\r\n".getBytes(StandardCharsets.UTF_8));
-        clientOutput.write(Files.readAllBytes(Paths.get("src/web/views/index.html")));
+        clientOutput.write(new HtmlGenerator().parseForCallable(("src/web/views/index.html")).getBytes(StandardCharsets.UTF_8));
         clientOutput.write("\r\n\r\n".getBytes(StandardCharsets.UTF_8));
+
         clientOutput.flush();
         client.close();
-
     }
+
+
+
+
 }
 

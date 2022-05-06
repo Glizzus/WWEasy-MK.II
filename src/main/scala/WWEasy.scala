@@ -50,7 +50,6 @@ object WWEasy extends App {
 
         case "load" =>
 
-          load(input(1), input(2))
           val newName = input(3)
           val map = load(input(1), input(2))
           println(s".csv successfully loaded into $newName") // This tells the user the ID of the DateMap
@@ -252,7 +251,7 @@ object WWEasy extends App {
         println("merge [id] [id] [new id]                        help [command]")
         println("quit                                            clear [id]")
         println("clearall                                        filedump")
-        println("renamefile")
+        println("renamefile [oldfile] [newfile]")
 
       case "load" =>
         println("\nLoads a .csv file into the program to manipulate\n")
@@ -324,7 +323,13 @@ object WWEasy extends App {
         println("USAGE: clearall")
 
       case "filedump" =>
-        println("\nShows each file in the Resources file ")
+        println("\nShows each file in the Resources file.\n")
+        println("USAGE: filedump")
+
+      case "renamefile" =>
+        println("\nRenames a file\n")
+        println("USAGE: renamefile [oldfile] [newfile]")
+        println("EXAMPLE: renamefile resources/oldname resources/newname")
 
       case _ => printHelp()
     }
