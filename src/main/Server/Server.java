@@ -10,8 +10,6 @@ import java.util.List;
 
 public class Server {
 
-    static String httpOK = "HTTP/1.1 \r\n" + "200 OK";
-
     public static void main(String[] args) throws IOException {
 
         try (ServerSocket serverSocket = new ServerSocket(8080)) {
@@ -26,46 +24,28 @@ public class Server {
     private static void handleClient(Socket client) throws IOException {
         BufferedReader buffRead = new BufferedReader(new InputStreamReader(client.getInputStream()));
 
-        StringBuilder requestBuilder = new StringBuilder();
         String line;
         List<String> lines = new ArrayList<>();
         while (!(line = buffRead.readLine()).isBlank()) {
             lines.add(line);
         }
         lines.forEach(System.out::println);
-        lines.forEach(x -> {
-            if (isPost(x)) System.out.println(getRoute(x));
-        });
-        sendHTML(client);
-
+        UrlRequest request = UrlRequest.requestFromUrl(lines.get(0));
+        sendHTML(client, request);
     }
 
-    private static boolean isPost(String line) {
-        return line.startsWith("POST");
-    }
-
-    private static boolean isGet(String line) {
-        return line.startsWith("GET");
-    }
-
-    private static String getRoute(String line) {
-        return line.split("/")[1].split(" ")[0];
-    }
-
-    private static void sendHTML(Socket client) throws IOException {
+    private static void sendHTML(Socket client, UrlRequest request) throws IOException {
         OutputStream clientOutput = client.getOutputStream();
-        clientOutput.write(httpOK.getBytes(StandardCharsets.UTF_8));
+        clientOutput.write(("HTTP/1.1 \r\n" + "200 OK").getBytes(StandardCharsets.UTF_8));
         clientOutput.write(("ContentType: " + "text/html" + "\r\n").getBytes(StandardCharsets.UTF_8));
         clientOutput.write("\r\n".getBytes(StandardCharsets.UTF_8));
-        clientOutput.write(new HtmlGenerator().parseForCallable(("src/web/views/index.html")).getBytes(StandardCharsets.UTF_8));
+
+        clientOutput.write(HtmlGenerator.replaceCallable(request).getBytes(StandardCharsets.UTF_8));
+
         clientOutput.write("\r\n\r\n".getBytes(StandardCharsets.UTF_8));
 
         clientOutput.flush();
         client.close();
     }
-
-
-
-
 }
 

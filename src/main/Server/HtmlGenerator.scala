@@ -1,11 +1,9 @@
-import java.util.Base64
-import java.nio.file.Files
 import java.io.File
-import scala.io.Source
-import java.nio.file.Path
 import java.nio.charset.StandardCharsets
+import java.nio.file.{Files, Path}
+import java.util.Base64
 
-case class HtmlGenerator() {
+object HtmlGenerator {
 
   val twoSpaces: String = "  "
 
@@ -62,20 +60,30 @@ case class HtmlGenerator() {
     String(file, StandardCharsets.UTF_8)
   }
 
+  def parseArgs(command: String): String = {
+    command.split("\\(")(1).replace(");", "").replace("\"", "")
+  }
 
   def writeCallableCommand(line: String): String = {
+    println(line)
     val command = line.split("\\.", 2)(1)
-    val args = command.split("\\(")(1).replace(");", "").replace("\"", "")
-    command match {
-      case command if command.startsWith("makeBase64Image") => HtmlGenerator().makeBase64Image(args)
-      case command if command.startsWith("loadCss") => HtmlGenerator().loadCss(args)
+    val function = command.split("\\(")(0)
+    function match {
+      case "makeBase64Image" => makeBase64Image(parseArgs(command))
+      case "loadCss" => loadCss(parseArgs(command))
+      case "makeStockDataTable" => "shart"
     }
   }
 
-    def parseForCallable(filepath: String): String = {
-      val replaced = Files.readAllLines(Path.of(filepath))
-        .stream().map(line => if line.trim.startsWith("@CALLABLE") then writeCallableCommand(line.trim) else line).toList
-      String.join("", replaced)
-    }
+  private def isCallable(line: String) = line.startsWith("@CALLABLE")
+
+  def replaceCallable(request: UrlRequest): String = {
+    val replaced = Files.readAllLines(Path.of(request.path))
+      .stream()
+      .map(line => line.trim)
+      .map(line => if isCallable(line) then writeCallableCommand(line) else line)
+      .toList
+    String.join("", replaced)
+  }
 
 }

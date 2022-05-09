@@ -132,6 +132,22 @@ object WWEasy extends App {
               state
           }
 
+        case "ids" =>
+          state.maps.foreach((key, _) => println(key))
+          state
+
+        case "export" =>
+          val idToExport = input(1)
+          val fileName = input(2)
+          val map = state.maps.get(idToExport)
+          map match {
+            case Some(x) =>
+              DataProcessor.dateMapToCsv(fileName, x)
+            case None =>
+              println("Queried Data does not exist")
+          }
+          state
+
         case "print" =>
           if input(1) == "all" then dataDump(state.maps)
           else {
@@ -251,7 +267,7 @@ object WWEasy extends App {
         println("merge [id] [id] [new id]                        help [command]")
         println("quit                                            clear [id]")
         println("clearall                                        filedump")
-        println("renamefile [oldfile] [newfile]")
+        println("renamefile [oldfile] [newfile]                  ids")
 
       case "load" =>
         println("\nLoads a .csv file into the program to manipulate\n")
@@ -330,6 +346,10 @@ object WWEasy extends App {
         println("\nRenames a file\n")
         println("USAGE: renamefile [oldfile] [newfile]")
         println("EXAMPLE: renamefile resources/oldname resources/newname")
+
+      case "ids" =>
+        println("\nShows all ID's for dataframes\n")
+        println("USAGE: ids")
 
       case _ => printHelp()
     }

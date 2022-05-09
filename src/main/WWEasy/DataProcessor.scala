@@ -30,12 +30,12 @@ case object DataProcessor {
       else {
         val line = lines.next().split(',')
         val date = LocalDate.parse(line(0))
-        dataType.toLowerCase() match {
-          case "-p" | "-ppv" =>
+        dataType.toLowerCase().replaceFirst("-", "") match {
+          case "p" | "ppv" =>
             tailRecParser(map + (date -> parsePpvData(line)), lines)
-          case "-s" | "-stock" => parseStockData(line)
+          case "s" | "stock" => parseStockData(line)
             tailRecParser(map + (date -> parseStockData(line)), lines)
-          case "-r" | "-ratings" =>
+          case "r" | "ratings" =>
             tailRecParser(map + (date -> parseRatingsData(line)), lines)
         }
       }
@@ -58,17 +58,50 @@ case object DataProcessor {
   }
 
   
-  def parsePpvData(line: Array[String]): PpvData = PpvData(line(1))
+  val parsePpvData: Array[String] => PpvData = line => PpvData(line(1))
 
-
-  def parseStockData(line: Array[String]): StockData = {
+  val parseStockData: Array[String] => StockData = line => {
     StockData(line(1).toFloat, line(2).toFloat, line(3).toFloat,
-              line(4).toFloat, line(5).toFloat, line(6).toInt)
+      line(4).toFloat, line(5).toFloat, line(6).toInt)
   }
 
-  def parseRatingsData(line: Array[String]): RatingsData = {
+  val parseRatingsData: Array[String] => RatingsData = line => {
     RatingsData(line(1),
       line(2).toFloatOption.getOrElse(-1.toFloat),
       line(3).toIntOption.getOrElse(-1))
   }
+
+
+  def dateMapToCsv(fileName: String, map: DateMap): Unit = {
+    import java.io.File
+    import java.io.BufferedWriter
+    import java.io.FileWriter
+    val writer = BufferedWriter(FileWriter(File(fileName)))
+    writer.write("type,date,data\n")
+
+    @tailrec
+    def recursiveWriter(map: DateMap): Unit = {
+      if map.isEmpty then println("Export finished")
+      else {
+        val minKey = map.data.firstKey
+        val dateToWrite = minKey.toString
+        writer.write(map.data.getOrElse(minKey, "") match {
+          case r: RatingsData => r.toCsvString(dateToWrite)
+          case s: StockData => s.toCsvString(dateToWrite)
+          case p: PpvData => p.toCsvString(dateToWrite)
+          case "" => ""
+        })
+        writer.write("\n")
+        recursiveWriter(map - minKey)
+      }
+    }
+    recursiveWriter(map)
+    writer.close()
+  }
+
+
+
+
+
+
 }

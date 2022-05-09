@@ -5,8 +5,6 @@ import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
-
-import java.text.ParseException;
 import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -157,7 +155,7 @@ public class StockDataCsvGrabber {
     }
 
 
-    private static void getStockDataCsv(String[] args) throws IOException, ParseException {
+    private static void getStockDataCsv(String[] args) {
         if (args.length != 5) throw new IllegalArgumentException();
         String ticker = args[0];
         String start = args[1];
@@ -186,7 +184,7 @@ public class StockDataCsvGrabber {
         System.out.printf("File loaded into %s%n", fullPath);
     }
 
-    public static void main(String[] args) throws ParseException, IOException {
+    public static void main(String[] args) {
 
         switch (args.length) {
             case 0 -> getStockDataCsv(getInputs());

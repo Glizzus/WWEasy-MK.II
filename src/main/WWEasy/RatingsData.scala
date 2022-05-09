@@ -11,6 +11,10 @@ case class RatingsData(title: String, relRating: Float, absRating: Int) extends 
       f"${if relRating == -1 then " NaN" else f"$relRating%1.2f"}     " +
       f"${if absRating == -1 then " NaN" else absRating}"
   }
+  
+  def toCsvString(date: String): String = {
+    s"R,$date,$title,$relRating,$absRating"
+  }
 
   val isRaw: Boolean = title.contains("RAW")
   val isSmackDown: Boolean = title.contains("SmackDown")

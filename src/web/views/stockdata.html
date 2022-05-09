@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>WWEasy</title>
+    <style type="text/css">
+        @CALLABLE.loadCss("src/web/stylesheets/styles.css");
+    </style>
+</head>
+<body>
+    <script>
+        function todaysDate() {
+            return new Date().toISOString.split("T")[0];
+        }
+    </script>
+    <form method="get">
+        <input type="date" id="start" name="date-start" min="1999-10-19" max="todaysDate()">
+        <input type="date" id="end" name="date-end" min="1999-10-19" max="todaysDate()">
+        <input type="radio" id="daily" name="interval" value="daily">
+        <label for="daily">Daily</label><br>
+        <input type="radio" id="weekly" name="interval" value="weekly">
+        <label for="weekly">Weekly</label><br>
+        <input type="radio" id="monthly" name="interval" value="monthly">
+        <label for="monthly">Monthly</label>
+        <input type="submit" value="send">
+    </form>
+        @CALLABLE.makeStockDataTable();
+</body>
+</html>
