@@ -174,4 +174,8 @@ case class DateMap(data: TreeMap[LocalDate, Any]) {
   def isEmpty: Boolean = {
     data.isEmpty
   }
+
+  def size: Int = {
+    data.size
+  }
 }

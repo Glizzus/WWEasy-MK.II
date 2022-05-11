@@ -18,8 +18,7 @@ import java.util.Scanner;
  */
 public class StockDataCsvGrabber {
 
-    private StockDataCsvGrabber() {
-    } // Don't let anybody instantiate this class
+    private StockDataCsvGrabber() {} // Don't let anybody instantiate this class
 
 
     /**

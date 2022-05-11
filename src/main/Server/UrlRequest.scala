@@ -1,5 +1,21 @@
+
+
 import scala.util.matching.Regex
 
+/** Encapsulates data regarding URL Requests
+ *
+ * @param method
+ * @param path
+ * @param query
+ */
+case class UrlRequest(method: String, path: String, query: Array[String]) {
+
+  val isPost: Boolean = method.equalsIgnoreCase("post")
+  val isGet: Boolean = method.equalsIgnoreCase("get")
+
+}
+
+/** Provides functionality to generate a UrlRequest from a url String */
 object UrlRequest {
 
   def requestFromUrl(url: String): UrlRequest = {
@@ -41,10 +57,3 @@ object UrlRequest {
   }
 }
 
-
-case class UrlRequest(method: String, path: String, query: Array[String]) {
-
-  val isPost: Boolean = method.equalsIgnoreCase("post")
-  val isGet: Boolean = method.equalsIgnoreCase("get")
-
-}

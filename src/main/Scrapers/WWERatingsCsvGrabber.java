@@ -1,13 +1,10 @@
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
 
 /** This aids in gathering WWE ratings data from www.wrestlingdata.com.
  *
@@ -42,33 +39,35 @@ public final class WWERatingsCsvGrabber {
         /**
          * Formats ScrapeResults into a csv String.
          *
-         * @param i an integer representing the index of the ScrapeResults to use
+         * @param lineNum an int representing the index of the ScrapeResults to use
          * @return a formatting String to be added to a .csv file
          */
-        private String resultFormat(int i, int page) {
+        private String resultFormat(int lineNum, int page) {
             // Ensures there is no newline for the last line of a .csv file
-            String form = (page == 1 && i == 0) ? "%s,%s,%s,%s" : "%s,%s,%s,%s\n";
-            return String.format(form,
-                    dates.get(i).replace('/', '-'),
-                    shows.get(i),
-                    relRatings.get(i),
-                    absRatings.get(i).replaceAll(",", ""));
+            String format = (page == 1 && lineNum == 0) ? "%s,%s,%s,%s" : "%s,%s,%s,%s\n";
+            return String.format(format,
+                    dates.get(lineNum).replace('/', '-'),
+                    shows.get(lineNum),
+                    relRatings.get(lineNum),
+                    absRatings.get(lineNum).replaceAll(",", ""));
         }
     }
 
     private static class ScrapeWorker implements Runnable {
+
           Thread thread;
           ScrapeResults results = new ScrapeResults();
-          String toScrape;
+          String whatToScrape;
           String url;
-          ScrapeWorker(String whatToScrape, String urlIn) {
-              toScrape = whatToScrape;
+
+          ScrapeWorker(String whatToScrapeIn, String urlIn) {
+              whatToScrape = whatToScrapeIn;
               url = urlIn;
         }
         public void run() {
               Document doc = tryGetDocument(url);
               Elements tables = doc.select("table");
-              switch (toScrape) {
+              switch (whatToScrape) {
                     case "dates" ->
                             tables.select("td[align=center][bgcolor=#660000][style=with:20%;]").
                                     forEach(x -> results.dates.add(x.text()));

@@ -7,6 +7,6 @@ case class PpvData(title: String)  {
 
   override def toString: String = title
 
-  def toCsvString(date: String): String = s"P,$date,$title"
+  def toCsvString: String = s"$title"
   
 }

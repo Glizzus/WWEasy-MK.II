@@ -40,7 +40,7 @@ public class Server {
         clientOutput.write(("ContentType: " + "text/html" + "\r\n").getBytes(StandardCharsets.UTF_8));
         clientOutput.write("\r\n".getBytes(StandardCharsets.UTF_8));
 
-        clientOutput.write(HtmlGenerator.replaceCallable(request).getBytes(StandardCharsets.UTF_8));
+        clientOutput.write(HtmlGenerator.replaceCallable(request.path()).getBytes(StandardCharsets.UTF_8));
 
         clientOutput.write("\r\n\r\n".getBytes(StandardCharsets.UTF_8));
 
